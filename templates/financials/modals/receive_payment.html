@@ -1,0 +1,106 @@
+<div
+    id="modal-content-card"
+    class="bg-base-100 rounded-2xl shadow-2xl w-full max-w-lg relative z-10 overflow-hidden flex flex-col max-h-[90vh] animate-fade-in"
+>
+    <div
+        class="bg-emerald-600 p-4 text-white flex justify-between items-center"
+    >
+        <h3 class="font-bold text-lg flex items-center gap-2">
+            <i data-lucide="banknote" class="w-5 h-5"></i> Receber Pagamento
+        </h3>
+        <button
+            onclick="document.getElementById('room-modal').remove()"
+            class="btn btn-ghost btn-circle btn-sm text-white"
+        >
+            ✕
+        </button>
+    </div>
+
+    <form
+        hx-post="{% url 'receive_payment_htmx' booking.id %}"
+        hx-target="#room-modal"
+        hx-swap="outerHTML"
+        class="flex flex-col flex-1 overflow-hidden"
+    >
+        <div class="p-6 space-y-4 overflow-y-auto flex-1">
+            <div class="stats shadow w-full bg-gray-50 border border-gray-100">
+                <div class="stat p-4">
+                    <div class="stat-title text-xs">Total da Reserva</div>
+                    <div class="stat-value text-lg">
+                        R$ {{ booking.total_value }}
+                    </div>
+                </div>
+                <div class="stat p-4">
+                    <div class="stat-title text-xs">Já Pago</div>
+                    <div class="stat-value text-emerald-500 text-lg">
+                        R$ {{ booking.amount_paid }}
+                    </div>
+                </div>
+                <div class="stat p-4 bg-white">
+                    <div class="stat-title text-xs font-bold text-gray-800">
+                        Falta Pagar
+                    </div>
+                    <div class="stat-value text-rose-500 text-lg">
+                        R$ {{ booking.balance_due }}
+                    </div>
+                </div>
+            </div>
+
+            {% if error %}
+            <div class="alert alert-error text-white text-sm">
+                <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+
+            <div class="form-control">
+                <label class="label font-bold text-gray-600">Valor (R$)</label>
+                {{ form.amount }}
+            </div>
+
+            <div class="form-control">
+                <label class="label font-bold text-gray-600"
+                    >Forma de Pagamento</label
+                >
+                {{ form.payment_method }}
+                <label class="label">
+                    <span class="label-text-alt text-error">
+                        {% if not form.payment_method.field.queryset.exists %}
+                        Atenção: Cadastre métodos de pagamento no Admin
+                        primeiro! {% endif %}
+                    </span>
+                </label>
+            </div>
+
+            <div class="form-control">
+                <label class="label font-bold text-gray-600">Observação</label>
+                {{ form.description }}
+            </div>
+        </div>
+
+        <div class="p-4 bg-gray-50 border-t flex justify-end gap-2">
+            {% with room=booking.allocations.first.room %}
+            <button
+                type="button"
+                hx-get="{% url 'room_details_modal' room.id %}"
+                hx-target="#room-modal"
+                hx-swap="outerHTML"
+                class="btn btn-ghost"
+            >
+                Voltar
+            </button>
+            {% endwith %}
+
+            <button
+                type="submit"
+                class="btn btn-success text-white shadow-lg shadow-emerald-500/30"
+            >
+                <i data-lucide="check" class="w-4 h-4"></i> Confirmar
+                Recebimento
+            </button>
+        </div>
+    </form>
+</div>
+<script>
+    if (typeof lucide !== "undefined") lucide.createIcons();
+</script>

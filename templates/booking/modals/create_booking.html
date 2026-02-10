@@ -1,0 +1,73 @@
+<div id="modal-content-card" class="bg-base-100 rounded-2xl shadow-2xl w-full max-w-lg relative z-10 overflow-hidden flex flex-col max-h-[90vh] animate-fade-in">
+
+    <div class="bg-primary p-4 text-white flex justify-between items-center">
+        <h3 class="font-bold text-lg flex items-center gap-2">
+            <i data-lucide="calendar-plus" class="w-5 h-5"></i> Nova Reserva
+        </h3>
+        <button onclick="document.getElementById('room-modal').remove()" class="btn btn-ghost btn-circle btn-sm text-white hover:bg-white/20">✕</button>
+    </div>
+
+    <form hx-post="{% url 'create_booking_htmx' %}?room={{ room.id }}"
+          hx-target="#modal-content-card"
+          hx-swap="outerHTML"
+          class="flex flex-col flex-1 overflow-hidden">
+
+        <div class="p-6 space-y-4 overflow-y-auto flex-1">
+
+            <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                <div class="badge badge-lg bg-emerald-100 text-emerald-600 font-bold border-none">
+                    {{ room.number }}
+                </div>
+                <div>
+                    <p class="font-bold text-gray-800">{{ room.category.name }}</p>
+                    <p class="text-xs text-gray-500">R$ {{ room.category.base_price }} / noite</p>
+                </div>
+            </div>
+
+            {% if error %}
+            <div class="alert alert-error text-white text-sm shadow-md animate-pulse">
+                <i data-lucide="alert-circle" class="w-5 h-5"></i>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+
+            <div class="form-control">
+                <label class="label font-bold text-gray-600">Hóspede</label>
+                {{ form.guest }}
+                {% if form.guest.errors %}
+                    <span class="text-error text-xs mt-1">{{ form.guest.errors.0 }}</span>
+                {% endif %}
+                <label class="label">
+                    <span class="label-text-alt text-gray-400">Não achou? Cadastre na aba Hóspedes.</span>
+                </label>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-control">
+                    <label class="label font-bold text-gray-600">Check-in</label>
+                    {{ form.start_date }}
+                </div>
+                <div class="form-control">
+                    <label class="label font-bold text-gray-600">Check-out</label>
+                    {{ form.end_date }}
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4 bg-gray-50 border-t flex justify-end gap-2">
+            <button
+                type="button"
+                hx-get="{% url 'room_details_modal' room.id %}"
+                hx-target="#room-modal"
+                hx-swap="outerHTML"
+                class="btn btn-ghost">
+                Voltar
+            </button>
+
+            <button type="submit" class="btn btn-primary shadow-lg shadow-primary/30 text-white">
+                <i data-lucide="check" class="w-4 h-4"></i> Confirmar
+            </button>
+        </div>
+    </form>
+</div>
+<script>if (typeof lucide !== 'undefined') lucide.createIcons();</script>

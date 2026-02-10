@@ -1,0 +1,137 @@
+<div id="room-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+         onclick="document.getElementById('room-modal').remove()"></div>
+
+    <div id="modal-content-card" class="bg-base-100 rounded-2xl shadow-2xl w-full max-w-lg relative z-10 overflow-hidden flex flex-col max-h-[90vh] animate-fade-in">
+
+        <button onclick="document.getElementById('room-modal').remove()"
+                class="btn btn-sm btn-circle btn-ghost absolute right-3 top-3 z-50 hover:bg-gray-100">✕</button>
+
+        <div class="p-6 pb-2">
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold shadow-sm border border-gray-100
+                    {% if allocation %}bg-rose-50 text-rose-600
+                    {% elif room.status == 'DIRTY' %}bg-amber-50 text-amber-600
+                    {% else %}bg-emerald-50 text-emerald-600{% endif %}">
+                    {{ room.number }}
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-xl text-gray-800">{{ room.category.name }}</h3>
+                    <div class="flex items-center gap-2 mt-1">
+                        {% if allocation %}
+                            <span class="badge badge-error gap-1 text-white font-bold">Ocupado</span>
+                        {% elif room.status == 'DIRTY' %}
+                            <span class="badge badge-warning gap-1 text-white font-bold">Limpeza</span>
+                        {% else %}
+                            <span class="badge badge-success gap-1 text-white font-bold">Disponível</span>
+                        {% endif %}
+                        <span class="text-xs text-gray-400">• Andar {{ room.floor }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6 pt-2 overflow-y-auto flex-1">
+
+            {% if allocation %}
+                <div class="space-y-4">
+                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 flex items-center gap-3">
+                        <div class="avatar placeholder">
+                            <div class="bg-neutral text-neutral-content rounded-full w-10">
+                                <span>{{ allocation.booking.guest.name|slice:":2"|upper }}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="font-bold text-gray-800">{{ allocation.booking.guest.name }}</p>
+                            <p class="text-xs text-gray-500">
+                                <i data-lucide="calendar" class="w-3 h-3 inline"></i>
+                                {{ allocation.start_date|date:"d/m" }} - {{ allocation.end_date|date:"d/m" }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border border-gray-200 p-4 rounded-xl shadow-sm">
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="text-gray-500">Saldo Devedor</span>
+                            <span class="font-bold {% if allocation.booking.balance_due > 0 %}text-rose-500{% else %}text-emerald-500{% endif %}">
+                                R$ {{ allocation.booking.balance_due }}
+                            </span>
+                        </div>
+                        <progress class="progress progress-success w-full h-2" value="{{ allocation.booking.amount_paid|stringformat:'f' }}" max="{{ allocation.booking.total_value|stringformat:'f' }}"></progress>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 mt-4">
+                        <button
+                            hx-get="{% url 'receive_payment_htmx' allocation.booking.id %}"
+                            hx-target="#modal-content-card"
+                            hx-swap="outerHTML transition:true"
+                            class="btn btn-outline btn-success btn-sm w-full gap-2">
+                            <i data-lucide="dollar-sign" class="w-4 h-4"></i> Receber
+                        </button>
+                        <button
+                            hx-post="{% url 'checkout_htmx' allocation.booking.id %}"
+                            hx-swap="none"
+                            {% if allocation.booking.balance_due > 0 %}
+                            hx-confirm="ATENÇÃO: Este hóspede ainda deve R$ {{ allocation.booking.balance_due }}. Tem certeza que deseja realizar o check-out sem receber?"
+                            {% else %}
+                            hx-confirm="Confirmar a saída do hóspede e marcar o quarto para limpeza?"
+                            {% endif %}
+                            class="btn btn-error text-white btn-sm shadow-md shadow-rose-200 w-full gap-2">
+                            <i data-lucide="log-out" class="w-4 h-4"></i> Check-out
+                        </button>
+                    </div>
+                </div>
+
+            {% elif room.status == 'DIRTY' %}
+                <div class="text-center py-8 space-y-4">
+                    <div class="p-4 bg-amber-50 text-amber-500 rounded-full inline-block border-4 border-amber-100/50 animate-pulse">
+                        <i data-lucide="sparkles" class="w-10 h-10"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-800 text-lg">Necessita Higienização</h4>
+                        <p class="text-sm text-gray-500 max-w-xs mx-auto">
+                            Confirme apenas após a troca de roupas de cama e limpeza completa.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-gray-100">
+                    <button
+                        hx-post="{% url 'clean_room_action' room.id %}"
+                        hx-swap="none"
+                        class="btn btn-warning text-white w-full shadow-lg shadow-amber-200 gap-2">
+                        <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                        Confirmar Limpeza Concluída
+                    </button>
+                </div>
+
+            {% else %}
+                <div class="text-center py-8 space-y-4">
+                    <div class="p-4 bg-emerald-50 text-emerald-600 rounded-full inline-block border-4 border-emerald-100/50">
+                        <i data-lucide="bed-double" class="w-10 h-10"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-800 text-lg">Quarto Livre</h4>
+                        <p class="text-sm text-gray-500">Pronto para receber hóspedes.</p>
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-gray-100">
+                    <button
+                        hx-get="{% url 'create_booking_htmx' %}?room={{ room.id }}"
+                        hx-target="#modal-content-card"
+                        hx-swap="outerHTML transition:true"
+                        class="btn btn-primary w-full shadow-lg shadow-primary/20 text-white gap-2">
+                        <i data-lucide="calendar-plus" class="w-4 h-4"></i> Criar Nova Reserva
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+</script>

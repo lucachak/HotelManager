@@ -1,0 +1,80 @@
+<div class="animate-slide-in h-full flex flex-col justify-between overflow-hidden">
+
+    <div class="flex items-center gap-2 mb-4">
+        <button
+            hx-get="{% url 'room_detail' booking.allocations.all.0.room.id %}"
+            hx-target="#modal-content"
+            hx-swap="innerHTML"
+            hx-indicator="#modal-loader"
+            class="btn btn-sm btn-circle btn-ghost hover:bg-emerald-50 text-emerald-600 tooltip tooltip-right"
+            data-tip="Voltar">
+            <i data-lucide="arrow-left"></i>
+        </button>
+        <h3 class="font-bold text-lg text-emerald-600 flex items-center gap-2">
+            Receber Pagamento
+        </h3>
+    </div>
+
+    <div class="py-4 bg-emerald-50 rounded-lg mb-4 px-4 border border-emerald-100 text-center shadow-sm">
+        <p class="text-xs text-emerald-600 uppercase font-bold tracking-widest">Saldo Devedor</p>
+        <span class="font-bold text-3xl text-emerald-700">R$ {{ booking.balance_due }}</span>
+    </div>
+
+    <form hx-post="{% url 'receive_payment' booking.id %}"
+          hx-target="#modal-content"
+          hx-swap="innerHTML"
+          hx-indicator="#modal-loader"
+          class="space-y-4 flex-1">
+
+        {% csrf_token %}
+
+        <div class="form-control">
+            <label class="label"><span class="label-text font-medium text-gray-600">Valor a Pagar (R$)</span></label>
+            {{ form.amount }}
+        </div>
+
+        <div class="form-control">
+            <label class="label"><span class="label-text font-medium text-gray-600">Forma de Pagamento</span></label>
+            {{ form.payment_method }}
+        </div>
+
+        <div class="form-control">
+            <label class="label"><span class="label-text font-medium text-gray-600">Descrição (Opcional)</span></label>
+            {{ form.description }}
+        </div>
+
+        <div class="modal-action pt-4 border-t border-base-200 mt-auto">
+             <button type="button"
+                hx-get="{% url 'room_detail' booking.allocations.all.0.room.id %}"
+                hx-target="#modal-content"
+                hx-swap="innerHTML"
+                hx-indicator="#modal-loader"
+                class="btn btn-ghost text-gray-500">Cancelar</button>
+
+            <button type="submit" class="btn btn-success text-white w-1/2 shadow-lg shadow-emerald-500/20">
+                Confirmar <i data-lucide="check" class="w-4 h-4 ml-2"></i>
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    lucide.createIcons();
+    // Foco automático para UX rápida
+    setTimeout(() => {
+        const input = document.querySelector('input[name="amount"]');
+        if(input) input.focus();
+    }, 100);
+</script>
+
+<style>
+    /* Animação Slide-In Suave */
+    .animate-slide-in {
+        animation: slideIn 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateX(40px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+</style>

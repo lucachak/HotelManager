@@ -1,0 +1,36 @@
+# --- Core Framework & API ---
+Django>=5.0,<5.2            # A base do sistema. Versão LTS (Long Term Support) recomendada.
+djangorestframework>=3.14   # Para criar APIs futuras (App Mobile ou Integrações).
+django-cors-headers>=4.3    # Segurança para permitir acesso à API.
+
+# --- Banco de Dados (PostgreSQL) ---
+psycopg2-binary>=2.9        # Driver oficial do Postgres (versão binary é mais fácil de instalar).
+dj-database-url>=2.1        # Lê a URL do banco do .env (postgres://...).
+
+# --- Configuração & Variáveis de Ambiente ---
+python-decouple>=3.8        # Para ler o arquivo .env de forma limpa.
+
+# --- Frontend & UI (A Elegância) ---
+django-htmx>=1.17           # Integração oficial do HTMX com Django (mensagens, triggers).
+django-widget-tweaks>=1.5   # Permite adicionar classes CSS (Tailwind) nos Forms do Django.
+django-crispy-forms>=2.1    # Formatação automática de formulários.
+crispy-tailwind>=1.0        # Pack do Crispy Forms para usar Tailwind CSS.
+
+# --- Segurança & Autenticação ---
+django-allauth>=0.61        # (Opcional, mas bom ter) Para login social ou gestão avançada de senha.
+
+# --- Ferramentas de Produção (Deploy) ---
+gunicorn>=21.2              # Servidor WSGI para rodar em produção (Linux/Docker).
+whitenoise>=6.6             # Serve arquivos estáticos (CSS/JS) de forma eficiente sem Nginx complexo.
+
+# --- Utilitários de Negócio (Hotelaria) ---
+django-fsm>=2.8             # Finite State Machine (Máquina de Estados) para o Status dos Quartos.
+django-filter>=23.5         # Para filtrar "Quartos Disponíveis" na URL (?price_min=100).
+django-money>=3.4           # (Recomendado) Lida com moedas (R$) melhor que Float/Decimal puro.
+phonenumbers>=8.13          # Validação de telefones internacionais/nacionais (Hóspedes).
+validate-docbr>=1.10        # Validação de CPF e CNPJ brasileiros.
+
+# --- Desenvolvimento (Só roda se instalar, mas bom listar) ---
+django-debug-toolbar>=4.3   # Barra lateral para ver queries SQL lentas.
+django-extensions>=3.2      # Comandos extras (ex: shell_plus).
+ipython>=8.18               # Shell interativo colorido e inteligente.

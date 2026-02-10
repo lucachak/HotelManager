@@ -1,0 +1,25 @@
+{% if session %}
+    <button
+        hx-get="{% url 'close_register_modal' %}"
+        hx-target="#booking-modal-container"
+        hx-swap="innerHTML"
+        class="btn btn-sm btn-outline btn-error gap-2">
+        <i data-lucide="lock" class="w-4 h-4"></i>
+        Fechar Caixa
+    </button>
+    <div class="hidden md:flex flex-col text-right mr-2">
+        <span class="text-xs text-gray-500">Caixa Aberto</span>
+        <span class="text-xs font-bold font-mono">{{ session.created_at|date:"H:i" }}</span>
+    </div>
+{% else %}
+    <button
+        hx-get="{% url 'open_register_modal' %}"
+        hx-target="#booking-modal-container"
+        hx-swap="innerHTML"
+        class="btn btn-sm btn-primary gap-2 animate-pulse">
+        <i data-lucide="key" class="w-4 h-4"></i>
+        Abrir Caixa
+    </button>
+{% endif %}
+
+<script>lucide.createIcons();</script>
