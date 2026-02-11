@@ -1,7 +1,10 @@
 
 from django.core.paginator import Paginator
+from django.contrib.auth.decorators import login_required
 from .models import Guest
 from .forms import GuestForm # Vamos criar este form jaja
+
+
 
 @login_required
 def guest_list(request):
