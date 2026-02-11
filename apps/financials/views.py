@@ -16,7 +16,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from apps.bookings.models import Booking
 from apps.financials.models import Transaction, CashRegisterSession, PaymentMethod, Product
 from apps.financials.services import CashierService
-from apps.financials.forms import ReceivePaymentForm, ConsumptionForm, RestockForm,ProductForm
+from apps.financials.forms import ReceivePaymentForm, ConsumptionForm, RestockForm, ProductForm
 from apps.accommodations.views import room_details_modal
 
 # --- Views de Caixa ---
