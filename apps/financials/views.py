@@ -1,11 +1,16 @@
+import json
 from decimal import Decimal
 from django.utils import timezone
 from django.contrib import messages
 from django.http import HttpResponse
+from django.db.models import Sum, Count, F
+from django.db.models.functions import TruncDate
 from django.core.exceptions import PermissionDenied
+from django.core.serializers.json import DjangoJSONEncoder
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.shortcuts import render, get_object_or_404, redirect
+
 
 from apps.bookings.models import Booking
 from apps.financials.models import Transaction, CashRegisterSession, PaymentMethod
@@ -146,3 +151,36 @@ def shift_details_modal(request, session_id):
     return render(request, 'financials/reports/shift_details_modal.html', {
         'session': session, 'transactions': transactions
     })
+
+
+@login_required
+def financial_dashboard(request):
+    """
+    Relatórios Gerenciais e Gráficos.
+    """
+    if not request.user.is_manager_or_admin:
+        raise PermissionDenied()
+
+    # 1. Dados Gerais
+    total_income = Transaction.objects.filter(transaction_type='INCOME').aggregate(Sum('amount'))['amount__sum'] or 0
+    total_consumption = Transaction.objects.filter(transaction_type='CONSUMPTION').aggregate(Sum('amount'))['amount__sum'] or 0
+
+    # 2. Dados para o Gráfico (Agrupado por Dia - Últimos 30 dias)
+    last_30_days = timezone.now().date() - timezone.timedelta(days=30)
+
+    daily_revenue = Transaction.objects.filter(
+        created_at__date__gte=last_30_days,
+        transaction_type='INCOME'
+    ).annotate(date=TruncDate('created_at')).values('date').annotate(total=Sum('amount')).order_by('date')
+
+    # Prepara JSON para o Chart.js
+    chart_dates = [entry['date'].strftime('%d/%m') for entry in daily_revenue]
+    chart_values = [float(entry['total']) for entry in daily_revenue]
+
+    context = {
+        'total_income': total_income,
+        'total_consumption': total_consumption,
+        'chart_dates': json.dumps(chart_dates),
+        'chart_values': json.dumps(chart_values),
+    }
+    return render(request, 'financials/reports/dashboard.html', context)

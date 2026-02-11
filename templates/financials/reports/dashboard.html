@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Relatórios Financeiros | Hotel Lux{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-8">
+
+    <div class="flex justify-between items-end">
+        <div>
+            <h2 class="text-3xl font-bold text-gray-800">Relatórios Financeiros</h2>
+            <p class="text-gray-500 mt-1">Acompanhe a saúde financeira do hotel.</p>
+        </div>
+
+        <div class="join bg-white shadow-sm border border-gray-100">
+            <button class="join-item btn btn-sm btn-active">30 Dias</button>
+            <button class="join-item btn btn-sm">Este Mês</button>
+            <button class="join-item btn btn-sm">Ano</button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="stats shadow bg-white border border-emerald-100 text-emerald-700">
+            <div class="stat">
+                <div class="stat-figure text-emerald-200">
+                    <i data-lucide="trending-up" class="w-8 h-8"></i>
+                </div>
+                <div class="stat-title text-emerald-600 font-bold uppercase text-xs">Receita Total</div>
+                <div class="stat-value">R$ {{ total_income }}</div>
+                <div class="stat-desc text-emerald-500">Acumulado geral</div>
+            </div>
+        </div>
+
+        <div class="stats shadow bg-white border border-orange-100 text-orange-700">
+            <div class="stat">
+                <div class="stat-figure text-orange-200">
+                    <i data-lucide="shopping-cart" class="w-8 h-8"></i>
+                </div>
+                <div class="stat-title text-orange-600 font-bold uppercase text-xs">Vendas de Produtos</div>
+                <div class="stat-value">R$ {{ total_consumption }}</div>
+                <div class="stat-desc text-orange-500">Frigobar e Bar</div>
+            </div>
+        </div>
+
+        <div class="stats shadow bg-white border border-blue-100 text-blue-700">
+            <div class="stat">
+                <div class="stat-figure text-blue-200">
+                    <i data-lucide="pie-chart" class="w-8 h-8"></i>
+                </div>
+                <div class="stat-title text-blue-600 font-bold uppercase text-xs">Ticket Médio</div>
+                <div class="stat-value text-2xl">R$ 0,00</div> <div class="stat-desc text-blue-500">Por hóspede</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card bg-white shadow-lg border border-gray-100">
+        <div class="card-body">
+            <h3 class="card-title text-gray-700 mb-4">Evolução de Receita (Últimos 30 dias)</h3>
+            <div class="h-80 w-full relative">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    const ctx = document.getElementById('revenueChart');
+
+    // Dados vindos do Django view
+    const labels = {{ chart_dates|safe }};
+    const data = {{ chart_values|safe }};
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Receita (R$)',
+                data: data,
+                backgroundColor: 'rgba(16, 185, 129, 0.2)', // Emerald-500 com opacidade
+                borderColor: 'rgba(16, 185, 129, 1)',
+                borderWidth: 1,
+                borderRadius: 4,
+                barPercentage: 0.6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#f3f4f6' }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+</script>
+{% endblock %}

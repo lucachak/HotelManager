@@ -38,4 +38,4 @@ class User(AbstractUser, UUIDModel, TimeStampedModel):
 
     @property
     def is_manager_or_admin(self):
-        return self.role in [self.Roles.MANAGER, self.Roles.ADMIN]
+        return self.is_superuser or self.role in [self.Role.ADMIN, self.Role.MANAGER]

@@ -16,4 +16,5 @@ urlpatterns = [
     # Relatórios
     path('reports/shifts/', views.shift_history, name='shift_history'),
     path('reports/shifts/<uuid:session_id>/', views.shift_details_modal, name='shift_details_modal'),
+    path('reports/dashboard/', views.financial_dashboard, name='financial_dashboard'),
 ]
