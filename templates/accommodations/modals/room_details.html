@@ -21,13 +21,19 @@
                     <h3 class="font-bold text-xl text-gray-800">{{ room.category.name }}</h3>
                     <div class="flex items-center gap-2 mt-1">
                         {% if allocation %}
-                            <span class="badge badge-error gap-1 text-white font-bold">Ocupado</span>
+                            <span class="badge badge-error gap-1 text-white font-bold animate-pulse">
+                                <i data-lucide="user" class="w-3 h-3"></i> Ocupado
+                            </span>
                         {% elif room.status == 'DIRTY' %}
-                            <span class="badge badge-warning gap-1 text-white font-bold">Limpeza</span>
+                            <span class="badge badge-warning gap-1 text-white font-bold">
+                                <i data-lucide="sparkles" class="w-3 h-3"></i> Limpeza
+                            </span>
                         {% else %}
-                            <span class="badge badge-success gap-1 text-white font-bold">Disponível</span>
+                            <span class="badge badge-success gap-1 text-white font-bold">
+                                <i data-lucide="check" class="w-3 h-3"></i> Disponível
+                            </span>
                         {% endif %}
-                        <span class="text-xs text-gray-400">• Andar {{ room.floor }}</span>
+                        <span class="text-xs text-gray-400">• {{ room.floor }}º Andar</span>
                     </div>
                 </div>
             </div>
@@ -36,82 +42,112 @@
         <div class="p-6 pt-2 overflow-y-auto flex-1">
 
             {% if allocation %}
-                <div class="space-y-4">
-                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 flex items-center gap-3">
-                        <div class="avatar placeholder">
-                            <div class="bg-neutral text-neutral-content rounded-full w-10">
-                                <span>{{ allocation.booking.guest.name|slice:":2"|upper }}</span>
-                            </div>
-                        </div>
+                <div class="bg-gray-50 rounded-xl p-4 border border-gray-100 mb-4">
+                    <div class="flex justify-between items-start mb-2">
                         <div>
-                            <p class="font-bold text-gray-800">{{ allocation.booking.guest.name }}</p>
-                            <p class="text-xs text-gray-500">
-                                <i data-lucide="calendar" class="w-3 h-3 inline"></i>
-                                {{ allocation.start_date|date:"d/m" }} - {{ allocation.end_date|date:"d/m" }}
-                            </p>
+                            <h4 class="font-bold text-gray-800">{{ allocation.booking.guest.name }}</h4>
+                            <p class="text-xs text-gray-500">Reserva #{{ allocation.booking.id|slice:":8" }}</p>
                         </div>
+                        <a href="{% url 'booking_fnrh_pdf' allocation.booking.id %}" target="_blank" class="btn btn-xs btn-ghost gap-1" title="Imprimir Ficha">
+                            <i data-lucide="printer" class="w-3 h-3"></i> FNRH
+                        </a>
                     </div>
 
-                    <div class="bg-white border border-gray-200 p-4 rounded-xl shadow-sm">
-                        <div class="flex justify-between text-sm mb-2">
-                            <span class="text-gray-500">Saldo Devedor</span>
-                            <span class="font-bold {% if allocation.booking.balance_due > 0 %}text-rose-500{% else %}text-emerald-500{% endif %}">
+                    <div class="flex gap-4 text-sm mt-3">
+                        <div>
+                            <span class="block text-xs text-gray-400 font-bold uppercase">Entrada</span>
+                            <span class="font-mono text-gray-700">{{ allocation.start_date|date:"d/m" }}</span>
+                        </div>
+                        <div>
+                            <span class="block text-xs text-gray-400 font-bold uppercase">Saída</span>
+                            <span class="font-mono text-gray-700">{{ allocation.end_date|date:"d/m" }}</span>
+                        </div>
+                        <div class="ml-auto text-right">
+                            <span class="block text-xs text-gray-400 font-bold uppercase">Saldo Devedor</span>
+                            <span class="font-mono font-bold {% if allocation.booking.balance_due > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">
                                 R$ {{ allocation.booking.balance_due }}
                             </span>
                         </div>
-                        <progress class="progress progress-success w-full h-2" value="{{ allocation.booking.amount_paid|stringformat:'f' }}" max="{{ allocation.booking.total_value|stringformat:'f' }}"></progress>
                     </div>
+                </div>
 
-                    <div class="grid grid-cols-2 gap-3 mt-4">
+                {% if allocation.booking.total_value > 0 %}
+                <div class="mb-4">
+                    <h5 class="text-xs font-bold text-gray-400 uppercase mb-2 flex items-center gap-1">
+                        <i data-lucide="receipt" class="w-3 h-3"></i> Extrato Rápido
+                    </h5>
+                    <div class="space-y-1 text-sm bg-white border rounded p-2 max-h-32 overflow-y-auto">
+                        {% for item in allocation.booking.payments.all %}
+                            <div class="flex justify-between border-b border-gray-50 last:border-0 pb-1">
+                                <span class="text-gray-600 text-xs">{{ item.description }}</span>
+                                <span class="font-mono text-xs font-bold {% if item.transaction_type == 'INCOME' %}text-emerald-600{% else %}text-rose-600{% endif %}">
+                                    {% if item.transaction_type == 'INCOME' %}-{% endif %}R$ {{ item.amount }}
+                                </span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="space-y-3 pt-2 border-t border-gray-100">
+
+                    {% if allocation.booking.status == 'CONFIRMED' %}
+                        <div class="alert alert-info text-xs shadow-sm py-2">
+                            <i data-lucide="info" class="w-4 h-4"></i> Reserva confirmada. Aguardando entrada.
+                        </div>
                         <button
-                            hx-get="{% url 'receive_payment_htmx' allocation.booking.id %}"
-                            hx-target="#booking-modal-container"
-                            hx-swap="innerHTML"
-                            class="btn btn-outline btn-success btn-sm w-full gap-2">
-                            <i data-lucide="dollar-sign" class="w-4 h-4"></i> Receber
+                            hx-post="{% url 'checkin_htmx' allocation.booking.id %}"
+                            hx-confirm="Confirmar a entrada do hóspede?"
+                            class="btn btn-primary w-full text-white shadow-lg shadow-blue-500/30">
+                            <i data-lucide="user-check" class="w-4 h-4"></i> Realizar Check-in
                         </button>
-                        <button
-                            hx-get="{% url 'add_consumption_htmx' allocation.booking.id %}"
-                            hx-target="#booking-modal-container"
-                            hx-swap="innerHTML"
-                            class="btn btn-outline btn-success btn-sm w-full gap-2">
-                            <i data-lucide="dollar-sign" class="w-4 h-4"></i> Adicionar Consumo
-                        </button>
+
+                    {% elif allocation.booking.status == 'CHECKED_IN' %}
+                        <div class="grid grid-cols-2 gap-2">
+                            <button
+                                hx-get="{% url 'receive_payment_htmx' allocation.booking.id %}"
+                                hx-target="#booking-modal-container"
+                                hx-swap="innerHTML"
+                                class="btn btn-success text-white shadow-sm">
+                                <i data-lucide="banknote" class="w-4 h-4"></i> Receber
+                            </button>
+
+                            <button
+                                hx-get="{% url 'add_consumption_htmx' allocation.booking.id %}"
+                                hx-target="#booking-modal-container"
+                                hx-swap="innerHTML"
+                                class="btn btn-warning text-white shadow-sm">
+                                <i data-lucide="wine" class="w-4 h-4"></i> Consumo
+                            </button>
+                        </div>
+
                         <button
                             hx-post="{% url 'checkout_htmx' allocation.booking.id %}"
-                            hx-swap="none"
-                            {% if allocation.booking.balance_due > 0 %}
-                            hx-confirm="ATENÇÃO: Este hóspede ainda deve R$ {{ allocation.booking.balance_due }}. Tem certeza que deseja realizar o check-out sem receber?"
-                            {% else %}
-                            hx-confirm="Confirmar a saída do hóspede e marcar o quarto para limpeza?"
-                            {% endif %}
-                            class="btn btn-error text-white btn-sm shadow-md shadow-rose-200 w-full gap-2">
-                            <i data-lucide="log-out" class="w-4 h-4"></i> Check-out
+                            hx-confirm="Deseja finalizar a estadia e liberar o quarto para limpeza?"
+                            class="btn btn-outline btn-error w-full mt-2">
+                            <i data-lucide="log-out" class="w-4 h-4"></i> Finalizar Estadia (Check-out)
                         </button>
-                    </div>
+                    {% endif %}
                 </div>
 
             {% elif room.status == 'DIRTY' %}
                 <div class="text-center py-8 space-y-4">
-                    <div class="p-4 bg-amber-50 text-amber-500 rounded-full inline-block border-4 border-amber-100/50 animate-pulse">
+                    <div class="p-4 bg-amber-50 text-amber-600 rounded-full inline-block border-4 border-amber-100/50 animate-bounce">
                         <i data-lucide="sparkles" class="w-10 h-10"></i>
                     </div>
                     <div>
-                        <h4 class="font-bold text-gray-800 text-lg">Necessita Higienização</h4>
-                        <p class="text-sm text-gray-500 max-w-xs mx-auto">
-                            Confirme apenas após a troca de roupas de cama e limpeza completa.
-                        </p>
+                        <h4 class="font-bold text-gray-800 text-lg">Aguardando Limpeza</h4>
+                        <p class="text-sm text-gray-500 px-8">O hóspede saiu. O quarto precisa ser higienizado antes de liberar.</p>
                     </div>
                 </div>
 
                 <div class="mt-6 pt-4 border-t border-gray-100">
-                    <button
-                        hx-post="{% url 'clean_room_action' room.id %}"
-                        hx-swap="none"
-                        class="btn btn-warning text-white w-full shadow-lg shadow-amber-200 gap-2">
-                        <i data-lucide="check-circle-2" class="w-5 h-5"></i>
-                        Confirmar Limpeza Concluída
-                    </button>
+                    <form hx-post="{% url 'clean_room_action' room.id %}">
+                        <button type="submit" class="btn btn-warning text-white w-full shadow-lg shadow-amber-200 gap-2">
+                            <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                            Confirmar Limpeza Concluída
+                        </button>
+                    </form>
                 </div>
 
             {% else %}

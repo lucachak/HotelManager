@@ -7,4 +7,7 @@ urlpatterns = [
 
     path('list/', views.booking_list, name='booking_list'),
     path('cancel/<uuid:booking_id>/', views.cancel_booking_htmx, name='cancel_booking_htmx'),
+
+    path('checkin/<uuid:booking_id>/', views.checkin_htmx, name='checkin_htmx'),
+    path('print/<uuid:booking_id>/fnrh/', views.booking_fnrh_pdf, name='booking_fnrh_pdf'),
 ]

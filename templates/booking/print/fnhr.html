@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>FNRH - {{ booking.guest.name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            .no-print { display: none; }
+            body { font-size: 12px; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-8 print:p-0 print:bg-white">
+
+    <div class="max-w-2xl mx-auto bg-white p-8 shadow-lg print:shadow-none">
+
+        <div class="no-print mb-6 flex justify-between items-center bg-blue-50 p-4 rounded-lg">
+            <p class="text-sm text-blue-800">Verifique os dados antes de imprimir.</p>
+            <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700">
+                Imprimir Ficha
+            </button>
+        </div>
+
+        <div class="text-center border-b-2 border-gray-800 pb-4 mb-6">
+            <h1 class="text-2xl font-bold uppercase tracking-wider">Ficha de Registro de Hóspede</h1>
+            <p class="text-xs uppercase mt-1">FNRH - Uso Obrigatório conforme Lei 11.771/2008</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-6 border-b border-gray-300 pb-6">
+            <div>
+                <span class="block text-[10px] uppercase text-gray-500 font-bold">Nº Reserva</span>
+                <span class="text-xl font-mono">{{ booking.id|slice:":8"|upper }}</span>
+            </div>
+            <div class="text-right">
+                <span class="block text-[10px] uppercase text-gray-500 font-bold">Quarto</span>
+                <span class="text-xl font-mono">{{ booking.allocations.first.room.number }}</span>
+            </div>
+            <div>
+                <span class="block text-[10px] uppercase text-gray-500 font-bold">Chegada (Check-in)</span>
+                <span class="font-bold">{{ booking.allocations.first.start_date|date:"d/m/Y" }}</span>
+            </div>
+            <div class="text-right">
+                <span class="block text-[10px] uppercase text-gray-500 font-bold">Saída Prevista (Check-out)</span>
+                <span class="font-bold">{{ booking.allocations.first.end_date|date:"d/m/Y" }}</span>
+            </div>
+        </div>
+
+        <div class="space-y-4 mb-8">
+            <h2 class="text-sm font-bold uppercase border-b border-gray-200 pb-1">Dados Pessoais</h2>
+
+            <div class="grid grid-cols-1 gap-4">
+                <div>
+                    <span class="block text-[10px] uppercase text-gray-500 font-bold">Nome Completo</span>
+                    <div class="border-b border-dotted border-gray-400 py-1">{{ booking.guest.name }}</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <span class="block text-[10px] uppercase text-gray-500 font-bold">Email</span>
+                    <div class="border-b border-dotted border-gray-400 py-1">{{ booking.guest.email|default:"____________________" }}</div>
+                </div>
+                <div>
+                    <span class="block text-[10px] uppercase text-gray-500 font-bold">Telefone</span>
+                    <div class="border-b border-dotted border-gray-400 py-1">{{ booking.guest.phone|default:"____________________" }}</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <span class="block text-[10px] uppercase text-gray-500 font-bold">Documento (CPF/Passaporte)</span>
+                    <div class="border-b border-dotted border-gray-400 py-1">{{ booking.guest.document|default:"____________________" }}</div>
+                </div>
+                <div>
+                    <span class="block text-[10px] uppercase text-gray-500 font-bold">Data de Nascimento</span>
+                    <div class="border-b border-dotted border-gray-400 py-1">_____/_____/_______</div>
+                </div>
+            </div>
+             <div>
+                <span class="block text-[10px] uppercase text-gray-500 font-bold">Endereço Completo</span>
+                <div class="border-b border-dotted border-gray-400 py-1">{{ booking.guest.address|default:"____________________" }}</div>
+            </div>
+        </div>
+
+        <div class="mt-12 pt-8">
+            <p class="text-[10px] text-justify text-gray-500 mb-8">
+                Declaro que as informações acima são verdadeiras. Concordo com as tarifas, horário de check-out (12:00) e política de não-fumantes do estabelecimento.
+            </p>
+
+            <div class="flex justify-between items-end gap-8">
+                <div class="flex-1 text-center">
+                    <div class="border-b border-black mb-2"></div>
+                    <span class="text-xs uppercase font-bold">Assinatura do Hóspede</span>
+                </div>
+                <div class="flex-1 text-center">
+                    <div class="border-b border-black mb-2"></div>
+                    <span class="text-xs uppercase font-bold">Recepção</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 text-center text-[10px] text-gray-400">
+            Gerado por HotelOS em {% now "d/m/Y H:i" %}
+        </div>
+    </div>
+
+</body>
+</html>

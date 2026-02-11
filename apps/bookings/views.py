@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 from django.db import transaction
+from django.db.models import Q
 from django.contrib import messages
 from apps.bookings.forms import QuickBookingForm
 from apps.bookings.models import Booking, RoomAllocation
@@ -128,27 +129,44 @@ def checkout_htmx(request, booking_id):
 @login_required
 def booking_list(request):
     """
-    Lista todas as reservas futuras e presentes.
+    Lista todas as reservas com filtros inteligentes.
     """
     today = timezone.now().date()
-
-    # Filtros simples via GET parameter (ex: ?filter=all)
     filter_type = request.GET.get('filter', 'upcoming')
 
-    allocations = RoomAllocation.objects.select_related('booking', 'booking__guest', 'room').order_by('start_date')
+    # Base Query: Traz tudo otimizado
+    allocations = RoomAllocation.objects.select_related(
+        'booking', 'booking__guest', 'room', 'room__category'
+    ).order_by('start_date')
 
     if filter_type == 'upcoming':
-        # Mostra quem chega de hoje em diante (e não foi cancelado)
+        # MOSTRAR:
+        # 1. Reservas Futuras (Chegam depois de hoje)
+        # 2. Reservas Atuais (Chegaram antes/hoje e ainda não saíram)
+        # Lógica: end_date >= hoje E status não cancelado
         allocations = allocations.filter(
-            start_date__gte=today
+            end_date__gte=today
         ).exclude(booking__status=Booking.Status.CANCELED)
 
     elif filter_type == 'history':
-        # Histórico passado
-        allocations = allocations.filter(end_date__lt=today)
+        # MOSTRAR:
+        # 1. Reservas Passadas (Saíram antes de hoje)
+        # 2. Reservas Finalizadas HOJE (Checkout feito)
+        # 3. Canceladas
+        allocations = allocations.filter(
+            Q(end_date__lt=today) |  # Já passou a data
+            Q(booking__status=Booking.Status.COMPLETED) | # Ou já deu baixa manual
+            Q(booking__status=Booking.Status.CANCELED)    # Ou cancelou
+        ).order_by('-end_date') # Ordena do mais recente pro mais antigo
+
+    # Paginação (opcional, mas bom ter)
+    from django.core.paginator import Paginator
+    paginator = Paginator(allocations, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
     context = {
-        'allocations': allocations,
+        'allocations': page_obj, # Passamos o objeto paginado
         'filter_type': filter_type,
         'today': today
     }
@@ -172,3 +190,42 @@ def cancel_booking_htmx(request, booking_id):
 
     messages.success(request, f"Reserva de {booking.guest.name} cancelada.")
     return HttpResponse(status=204, headers={'HX-Refresh': 'true'})
+
+@login_required
+@require_POST
+def checkin_htmx(request, booking_id):
+    """
+    Confirma a entrada do hóspede (Muda de CONFIRMED para CHECKED_IN).
+    """
+    booking = get_object_or_404(Booking, pk=booking_id)
+
+    # Regras de Negócio
+    if booking.status != Booking.Status.CONFIRMED:
+        messages.error(request, "Apenas reservas 'Confirmadas' podem fazer check-in.")
+        return HttpResponse(status=204)
+
+    # Atualiza status
+    try:
+        with transaction.atomic():
+            booking.status = Booking.Status.CHECKED_IN
+            booking.save()
+
+            # Força o status do quarto para Ocupado (caso não esteja)
+            allocation = booking.allocations.first()
+            if allocation:
+                Room.objects.filter(pk=allocation.room.id).update(status='OCCUPIED')
+
+        messages.success(request, f"Check-in realizado! Bem-vindo(a), {booking.guest.name}.")
+        return HttpResponse(status=204, headers={'HX-Refresh': 'true'})
+
+    except Exception as e:
+        messages.error(request, f"Erro ao processar check-in: {str(e)}")
+        return HttpResponse(status=204)
+
+@login_required
+def booking_fnrh_pdf(request, booking_id):
+    """
+    Gera a Ficha Nacional de Registro de Hóspedes (FNRH) para impressão.
+    """
+    booking = get_object_or_404(Booking, pk=booking_id)
+    return render(request, 'bookings/print/fnrh.html', {'booking': booking})
