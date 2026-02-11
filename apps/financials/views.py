@@ -16,7 +16,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from apps.bookings.models import Booking
 from apps.financials.models import Transaction, CashRegisterSession, PaymentMethod, Product
 from apps.financials.services import CashierService
-from apps.financials.forms import ReceivePaymentForm, ConsumptionForm, RestockForm
+from apps.financials.forms import ReceivePaymentForm, ConsumptionForm, RestockForm,ProductForm
 from apps.accommodations.views import room_details_modal
 
 # --- Views de Caixa ---
@@ -287,5 +287,29 @@ def restock_product_modal(request, product_id):
         form = RestockForm()
 
     return render(request, 'financials/stock/restock_modal.html', {
+        'form': form, 'product': product
+    })
+
+
+@login_required
+def product_edit_htmx(request, product_id):
+    """
+    Modal para editar preço e nome do produto.
+    """
+    if not request.user.is_manager_or_admin:
+        raise PermissionDenied()
+
+    product = get_object_or_404(Product, pk=product_id)
+
+    if request.method == "POST":
+        form = ProductForm(request.POST, instance=product)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Produto '{product.name}' atualizado!")
+            return HttpResponse(status=204, headers={'HX-Refresh': 'true'})
+    else:
+        form = ProductForm(instance=product)
+
+    return render(request, 'financials/stock/product_edit_modal.html', {
         'form': form, 'product': product
     })

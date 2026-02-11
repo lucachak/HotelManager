@@ -41,21 +41,32 @@ class ReceivePaymentForm(forms.Form):
                 raise ValidationError(f"Valor excessivo! Resta pagar apenas R$ {balance}.")
         return amount
 
+class ConsumptionModelChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        # Personaliza o texto do Dropdown: "Nome | R$ Preço (Estoque)"
+        return f"{obj.name} | R$ {obj.price} (Est: {obj.stock})"
+
 class ConsumptionForm(forms.Form):
-    product = forms.ModelChoiceField(
-        queryset=Product.objects.filter(is_active=True, stock__gt=0),
-        label="Produto",
-        empty_label="Selecione o item...",
-        widget=forms.Select(attrs={'class': 'select select-bordered w-full'})
+    product = ConsumptionModelChoiceField(
+        queryset=Product.objects.filter(is_active=True, stock__gt=0).order_by('name'),
+        label="Selecione o Produto",
+        empty_label="Escolha um item...",
+        widget=forms.Select(attrs={
+            'class': 'select select-bordered w-full font-medium',
+            'onchange': 'updateTotal()' # Gatilho para o JS calcular o total
+        })
     )
 
     quantity = forms.IntegerField(
         label="Quantidade",
         min_value=1,
         initial=1,
-        widget=forms.NumberInput(attrs={'class': 'input input-bordered w-full'})
+        widget=forms.NumberInput(attrs={
+            'class': 'input input-bordered w-full text-center font-bold',
+            'oninput': 'updateTotal()', # Gatilho para o JS calcular o total
+            'min': '1'
+        })
     )
-
 
 class RestockForm(forms.Form):
     quantity = forms.IntegerField(
@@ -71,3 +82,20 @@ class RestockForm(forms.Form):
         help_text="Deixe zerado se já foi pago ou for apenas ajuste.",
         widget=forms.NumberInput(attrs={'class': 'input input-bordered w-full', 'step': '0.01'})
     )
+
+class ProductForm(forms.ModelForm):
+    class Meta:
+        model = Product
+        fields = ['name', 'price', 'is_active']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'input input-bordered w-full font-bold'}),
+
+            'price': forms.NumberInput(attrs={'class': 'input input-bordered w-full pl-10', 'step': '0.01'}),
+
+            'is_active': forms.CheckboxInput(attrs={'class': 'toggle toggle-success'}),
+        }
+        labels = {
+            'name': 'Nome do Produto',
+            'price': 'Preço de Venda (R$)',
+            'is_active': 'Disponível para Venda?'
+        }

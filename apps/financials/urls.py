@@ -19,6 +19,8 @@ urlpatterns = [
     path('reports/dashboard/', views.financial_dashboard, name='financial_dashboard'),
     path('print/<uuid:booking_id>/receipt/', views.print_receipt_pdf, name='print_receipt_pdf'),
 
+    # Estoque
     path('stock/', views.stock_dashboard, name='stock_dashboard'),
     path('stock/<uuid:product_id>/restock/', views.restock_product_modal, name='restock_product_modal'),
+    path('stock/<uuid:product_id>/edit/', views.product_edit_htmx, name='product_edit_htmx'),
 ]
