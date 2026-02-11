@@ -25,32 +25,25 @@ class ReceivePaymentForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        # Captura o saldo devedor passado pela View
         self.balance_due = kwargs.pop('balance_due', None)
         super().__init__(*args, **kwargs)
 
     def clean_amount(self):
         amount = self.cleaned_data['amount']
-
-        # 1. Arredonda para 2 casas (Mata o problema dos 10 centavos fantasmas)
         amount = round(Decimal(amount), 2)
 
-        # 2. Valida valor positivo
         if amount <= 0:
             raise ValidationError("O valor deve ser positivo.")
 
-        # 3. Valida Overpayment (Pagar a mais)
         if self.balance_due is not None:
             balance = round(Decimal(self.balance_due), 2)
-            # Tolerância Zero: Se pagar 1 centavo a mais, bloqueia.
             if amount > balance:
                 raise ValidationError(f"Valor excessivo! Resta pagar apenas R$ {balance}.")
-
         return amount
 
 class ConsumptionForm(forms.Form):
     product = forms.ModelChoiceField(
-        queryset=Product.objects.filter(is_active=True, stock__gt=0), # Só mostra o que tem estoque
+        queryset=Product.objects.filter(is_active=True, stock__gt=0),
         label="Produto",
         empty_label="Selecione o item...",
         widget=forms.Select(attrs={'class': 'select select-bordered w-full'})
