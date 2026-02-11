@@ -119,6 +119,13 @@
                                 class="btn btn-warning text-white shadow-sm">
                                 <i data-lucide="wine" class="w-4 h-4"></i> Consumo
                             </button>
+
+                            <a href="{% url 'print_receipt_pdf' allocation.booking.id %}"
+                               target="_blank"
+                               class="btn btn-ghost btn-square shadow-sm border border-gray-200"
+                               title="Imprimir Recibo">
+                                <i data-lucide="printer" class="w-4 h-4 text-gray-600"></i>
+                            </a>
                         </div>
 
                         <button

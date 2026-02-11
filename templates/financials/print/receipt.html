@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Recibo #{{ booking.id|slice:":8" }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            .no-print { display: none; }
+            body { font-family: 'Courier New', Courier, monospace; } /* Estilo Cupom */
+        }
+        body { font-family: 'Courier New', Courier, monospace; }
+    </style>
+</head>
+<body class="bg-gray-100 p-8 print:p-0 print:bg-white text-sm">
+
+    <div class="max-w-md mx-auto bg-white p-6 shadow-lg print:shadow-none print:max-w-full">
+
+        <div class="no-print mb-6 text-center">
+            <button onclick="window.print()" class="bg-gray-800 text-white px-4 py-2 rounded font-bold hover:bg-black">
+                Imprimir Recibo
+            </button>
+        </div>
+
+        <div class="text-center border-b-2 border-dashed border-gray-300 pb-4 mb-4">
+            <h1 class="text-xl font-bold uppercase">Hotel Lux</h1>
+            <p>Av. da Praia, 1000 - Praia Grande/SP</p>
+            <p>CNPJ: 00.000.000/0001-99</p>
+            <p>Tel: (13) 3491-0000</p>
+        </div>
+
+        <div class="mb-4">
+            <div class="flex justify-between">
+                <span>RECIBO Nº:</span>
+                <span class="font-bold">{{ booking.id|slice:":8"|upper }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span>DATA:</span>
+                <span>{{ today|date:"d/m/Y H:i" }}</span>
+            </div>
+             <div class="flex justify-between">
+                <span>ATENDENTE:</span>
+                <span>{{ request.user.first_name|default:request.user.username }}</span>
+            </div>
+        </div>
+
+        <div class="border-b border-dashed border-gray-300 mb-4"></div>
+
+        <div class="mb-4">
+            <p><span class="font-bold">CLIENTE:</span> {{ booking.guest.name }}</p>
+            <p><span class="font-bold">DOC:</span> {{ booking.guest.document }}</p>
+            <p><span class="font-bold">QUARTO:</span> {{ booking.allocations.first.room.number }}</p>
+            <p><span class="font-bold">PERÍODO:</span> {{ booking.allocations.first.start_date|date:"d/m" }} a {{ booking.allocations.first.end_date|date:"d/m" }}</p>
+        </div>
+
+        <div class="border-b border-dashed border-gray-300 mb-4"></div>
+
+        <table class="w-full mb-4">
+            <thead>
+                <tr class="text-left">
+                    <th class="pb-2">DESCRIÇÃO</th>
+                    <th class="text-right pb-2">VALOR</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alloc in booking.allocations.all %}
+                <tr>
+                    <td>Diárias ({{ alloc.start_date|date:"d/m" }} - {{ alloc.end_date|date:"d/m" }})</td>
+                    <td class="text-right">{{ alloc.agreed_price }}</td>
+                </tr>
+                {% endfor %}
+
+                {% for item in consumptions %}
+                <tr>
+                    <td>{{ item.description }}</td>
+                    <td class="text-right">{{ item.amount }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="border-b border-dashed border-gray-300 mb-4"></div>
+
+        <div class="space-y-1 text-right">
+            <div class="flex justify-between font-bold">
+                <span>TOTAL BRUTO:</span>
+                <span>R$ {{ booking.total_value }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span>TOTAL PAGO:</span>
+                <span>R$ {{ booking.amount_paid }}</span>
+            </div>
+             <div class="flex justify-between font-bold text-lg mt-2">
+                <span>SALDO DEVEDOR:</span>
+                <span>R$ {{ booking.balance_due }}</span>
+            </div>
+        </div>
+
+        <div class="border-b border-dashed border-gray-300 my-6"></div>
+
+        <div class="mb-8">
+            <h3 class="font-bold mb-2 text-xs uppercase">Histórico de Pagamentos</h3>
+            {% for pay in payments %}
+            <div class="flex justify-between text-xs">
+                <span>{{ pay.created_at|date:"d/m H:i" }} - {{ pay.payment_method }}</span>
+                <span>R$ {{ pay.amount }}</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="text-center text-xs">
+            <p>*** NÃO É DOCUMENTO FISCAL ***</p>
+            <p>Obrigado pela preferência!</p>
+        </div>
+
+    </div>
+</body>
+</html>

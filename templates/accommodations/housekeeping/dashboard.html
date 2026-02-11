@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Governança | Hotel Lux{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto pb-20"> <div class="flex justify-between items-center mb-6 px-2">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                <i data-lucide="sparkles" class="w-6 h-6 text-amber-500"></i> Governança
+            </h2>
+            <p class="text-gray-500 text-sm mt-1">Quartos aguardando limpeza.</p>
+        </div>
+
+        <div class="badge badge-lg badge-warning text-white font-bold gap-2 p-4 shadow-sm">
+            <span id="dirty-count">{{ dirty_count }}</span> Pendentes
+        </div>
+    </div>
+
+    <div id="housekeeping-list" class="space-y-4">
+        {% for room in dirty_rooms %}
+
+        <div class="card bg-white shadow-md border-l-4 border-amber-400 animate-fade-in overflow-hidden transform transition-all duration-300" id="room-card-{{ room.id }}">
+
+            <div class="card-body p-4 sm:p-5 flex flex-row items-center justify-between gap-4">
+
+                <div class="flex items-center gap-4 min-w-0"> <div class="bg-amber-50 text-amber-600 w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold border border-amber-100 shadow-inner shrink-0">
+                        {{ room.number }}
+                    </div>
+                    <div class="truncate">
+                        <h3 class="font-bold text-gray-800 text-lg truncate">{{ room.category.name }}</h3>
+                        <div class="badge badge-ghost badge-sm text-gray-400 font-bold uppercase tracking-wider mt-1">
+                            {{ room.floor }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="shrink-0">
+                    <button
+                        hx-post="{% url 'clean_room_action' room.id %}"
+                        hx-target="#room-card-{{ room.id }}"
+                        hx-swap="outerHTML swap:500ms"
+                        class="btn btn-circle btn-success btn-lg text-white shadow-lg shadow-green-200 border-4 border-white active:scale-90 transition-transform flex items-center justify-center"
+                        aria-label="Marcar como Limpo"
+                        onclick="this.classList.add('loading', 'scale-90')">
+                        <i data-lucide="check" class="w-8 h-8 stroke-[3px]"></i>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        {% empty %}
+        <div class="flex flex-col items-center justify-center text-center py-16 opacity-60 animate-fade-in">
+            <div class="bg-emerald-100 p-6 rounded-full mb-4 text-emerald-600 shadow-inner">
+                <i data-lucide="check-circle-2" class="w-16 h-16"></i>
+            </div>
+            <h3 class="font-bold text-2xl text-gray-600">Tudo Limpo!</h3>
+            <p class="text-gray-500 mt-2">Você zerou as pendências de hoje.</p>
+            <a href="/" class="btn btn-ghost btn-sm mt-6 text-primary">Voltar ao Dashboard</a>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<style>
+    /* Animação personalizada para saída do card (Deslizar e Sumir) */
+    .htmx-swapping {
+        opacity: 0;
+        transform: translateX(100%) scale(0.9);
+        max-height: 0;
+        margin-bottom: 0;
+        padding: 0;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+</style>
+{% endblock %}

@@ -1,9 +1,10 @@
 import json
 from decimal import Decimal
+from datetime import datetime
+from django.db.models import Sum
 from django.utils import timezone
 from django.contrib import messages
 from django.http import HttpResponse
-from django.db.models import Sum, Count, F
 from django.db.models.functions import TruncDate
 from django.core.exceptions import PermissionDenied
 from django.core.serializers.json import DjangoJSONEncoder
@@ -152,35 +153,98 @@ def shift_details_modal(request, session_id):
         'session': session, 'transactions': transactions
     })
 
-
 @login_required
 def financial_dashboard(request):
     """
-    Relatórios Gerenciais e Gráficos.
+    Relatórios Gerenciais e Gráficos com Filtros de Data.
     """
     if not request.user.is_manager_or_admin:
-        raise PermissionDenied()
+        messages.error(request, "Acesso negado.")
+        return redirect('booking_list')
 
-    # 1. Dados Gerais
-    total_income = Transaction.objects.filter(transaction_type='INCOME').aggregate(Sum('amount'))['amount__sum'] or 0
-    total_consumption = Transaction.objects.filter(transaction_type='CONSUMPTION').aggregate(Sum('amount'))['amount__sum'] or 0
+    # 1. Identifica o Filtro Selecionado (Padrão: 30 dias)
+    period = request.GET.get('period', '30days')
+    today = timezone.now().date()
 
-    # 2. Dados para o Gráfico (Agrupado por Dia - Últimos 30 dias)
-    last_30_days = timezone.now().date() - timezone.timedelta(days=30)
+    # Define a Data de Início baseada no filtro
+    if period == 'month':
+        # Começo deste mês (dia 1)
+        start_date = today.replace(day=1)
+        label_chart = "Receita deste Mês"
+    elif period == 'year':
+        # Começo deste ano (1 de Jan)
+        start_date = today.replace(month=1, day=1)
+        label_chart = "Receita deste Ano"
+    else:
+        # Últimos 30 dias (Padrão)
+        start_date = today - timezone.timedelta(days=30)
+        label_chart = "Últimos 30 Dias"
 
+    # 2. Dados Gerais (KPIs) - Estes continuam sendo o TOTAL GERAL ACUMULADO?
+    # Geralmente KPIs mostram o total do período filtrado ou total geral.
+    # Vamos filtrar os KPIs também para bater com o gráfico!
+
+    kpi_income = Transaction.objects.filter(
+        transaction_type='INCOME',
+        created_at__date__gte=start_date
+    ).aggregate(Sum('amount'))['amount__sum'] or 0
+
+    kpi_consumption = Transaction.objects.filter(
+        transaction_type='CONSUMPTION',
+        created_at__date__gte=start_date
+    ).aggregate(Sum('amount'))['amount__sum'] or 0
+
+    # 3. Dados para o Gráfico
     daily_revenue = Transaction.objects.filter(
-        created_at__date__gte=last_30_days,
+        created_at__date__gte=start_date,
         transaction_type='INCOME'
     ).annotate(date=TruncDate('created_at')).values('date').annotate(total=Sum('amount')).order_by('date')
 
-    # Prepara JSON para o Chart.js
-    chart_dates = [entry['date'].strftime('%d/%m') for entry in daily_revenue]
-    chart_values = [float(entry['total']) for entry in daily_revenue]
+    # Processamento Seguro dos Dados
+    dates = []
+    values = []
+
+    for entry in daily_revenue:
+        d = entry['date']
+        if isinstance(d, str): # Fix SQLite
+            try:
+                d = datetime.strptime(d, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+
+        if d:
+            dates.append(d.strftime('%d/%m'))
+            values.append(float(entry['total']))
+
+    if not dates:
+        dates = ["Sem dados"]
+        values = [0]
 
     context = {
-        'total_income': total_income,
-        'total_consumption': total_consumption,
-        'chart_dates': json.dumps(chart_dates),
-        'chart_values': json.dumps(chart_values),
+        'total_income': kpi_income,
+        'total_consumption': kpi_consumption,
+        'chart_dates': json.dumps(dates),
+        'chart_values': json.dumps(values),
+        'period': period,       # Para marcar o botão ativo
+        'label_chart': label_chart
     }
     return render(request, 'financials/reports/dashboard.html', context)
+
+@login_required
+def print_receipt_pdf(request, booking_id):
+    """
+    Gera o Recibo de Pagamento (Comprovante de Estadia).
+    """
+    booking = get_object_or_404(Booking, pk=booking_id)
+
+    # Busca transações para detalhar
+    consumptions = booking.payments.filter(transaction_type=Transaction.Type.CONSUMPTION)
+    payments = booking.payments.filter(transaction_type=Transaction.Type.INCOME)
+
+    context = {
+        'booking': booking,
+        'consumptions': consumptions,
+        'payments': payments,
+        'today': timezone.now()
+    }
+    return render(request, 'financials/print/receipt.html', context)

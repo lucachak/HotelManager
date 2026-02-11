@@ -8,6 +8,46 @@ from .models import Room
 from apps.bookings.models import RoomAllocation
 
 @login_required
+def housekeeping_dashboard(request):
+    """
+    Painel exclusivo para a equipe de limpeza.
+    Mostra apenas quartos SUJOS ou em MANUTENÇÃO.
+    """
+    # Pega apenas quartos sujos, ordenados por prioridade (térreo primeiro, por exemplo)
+    dirty_rooms = Room.objects.filter(status='DIRTY').order_by('floor', 'number')
+
+    context = {
+        'dirty_rooms': dirty_rooms,
+        'dirty_count': dirty_rooms.count()
+    }
+    return render(request, 'accommodations/housekeeping/dashboard.html', context)
+
+@login_required
+@require_POST
+def clean_room_action(request, room_id):
+    """
+    Ação de limpar o quarto. Pode ser chamada do Dashboard ou do Modal.
+    """
+    room = get_object_or_404(Room, pk=room_id)
+
+    if room.status == 'DIRTY':
+        room.status = 'AVAILABLE'
+        room.save()
+        messages.success(request, f"Quarto {room.number} liberado para venda!")
+    else:
+        messages.warning(request, f"O Quarto {room.number} já estava limpo ou ocupado.")
+
+    # Se a requisição veio da página de Governança (Dashboard de Limpeza)
+    if 'housekeeping' in request.path or request.headers.get('HX-Target') == 'housekeeping-list':
+        # Remove o card da lista usando HTMX
+        return HttpResponse(status=200)
+
+    # Se veio do Modal (Recepcionista limpando), atualiza o modal
+    return room_details_modal(request, room.id)
+
+
+
+@login_required
 def room_details_modal(request, room_id):
     """
     Abre o modal do quarto.

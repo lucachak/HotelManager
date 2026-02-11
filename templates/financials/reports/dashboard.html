@@ -5,28 +5,38 @@
 {% block content %}
 <div class="max-w-7xl mx-auto space-y-8">
 
-    <div class="flex justify-between items-end">
+    <div class="flex flex-col md:flex-row justify-between items-end gap-4">
         <div>
             <h2 class="text-3xl font-bold text-gray-800">Relatórios Financeiros</h2>
-            <p class="text-gray-500 mt-1">Acompanhe a saúde financeira do hotel.</p>
+            <p class="text-gray-500 mt-1">Visão atual: <span class="font-bold text-primary">{{ label_chart }}</span></p>
         </div>
 
         <div class="join bg-white shadow-sm border border-gray-100">
-            <button class="join-item btn btn-sm btn-active">30 Dias</button>
-            <button class="join-item btn btn-sm">Este Mês</button>
-            <button class="join-item btn btn-sm">Ano</button>
+            <a href="?period=30days"
+               class="join-item btn btn-sm {% if period == '30days' %}btn-active btn-primary text-white{% endif %}">
+               30 Dias
+            </a>
+            <a href="?period=month"
+               class="join-item btn btn-sm {% if period == 'month' %}btn-active btn-primary text-white{% endif %}">
+               Este Mês
+            </a>
+            <a href="?period=year"
+               class="join-item btn btn-sm {% if period == 'year' %}btn-active btn-primary text-white{% endif %}">
+               Ano
+            </a>
         </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
         <div class="stats shadow bg-white border border-emerald-100 text-emerald-700">
             <div class="stat">
                 <div class="stat-figure text-emerald-200">
                     <i data-lucide="trending-up" class="w-8 h-8"></i>
                 </div>
-                <div class="stat-title text-emerald-600 font-bold uppercase text-xs">Receita Total</div>
+                <div class="stat-title text-emerald-600 font-bold uppercase text-xs">Receita (Período)</div>
                 <div class="stat-value">R$ {{ total_income }}</div>
-                <div class="stat-desc text-emerald-500">Acumulado geral</div>
+                <div class="stat-desc text-emerald-500">Entradas confirmadas</div>
             </div>
         </div>
 
@@ -47,14 +57,19 @@
                     <i data-lucide="pie-chart" class="w-8 h-8"></i>
                 </div>
                 <div class="stat-title text-blue-600 font-bold uppercase text-xs">Ticket Médio</div>
-                <div class="stat-value text-2xl">R$ 0,00</div> <div class="stat-desc text-blue-500">Por hóspede</div>
+                <div class="stat-value text-2xl">R$ 0,00</div>
+                <div class="stat-desc text-blue-500">Por hóspede</div>
             </div>
         </div>
     </div>
 
     <div class="card bg-white shadow-lg border border-gray-100">
         <div class="card-body">
-            <h3 class="card-title text-gray-700 mb-4">Evolução de Receita (Últimos 30 dias)</h3>
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="card-title text-gray-700">{{ label_chart }}</h3>
+                <div class="badge badge-outline text-xs">Atualizado agora</div>
+            </div>
+
             <div class="h-80 w-full relative">
                 <canvas id="revenueChart"></canvas>
             </div>
@@ -66,42 +81,64 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-    const ctx = document.getElementById('revenueChart');
+    document.addEventListener("DOMContentLoaded", function() {
+        const ctx = document.getElementById('revenueChart');
 
-    // Dados vindos do Django view
-    const labels = {{ chart_dates|safe }};
-    const data = {{ chart_values|safe }};
+        // Recebe os dados do Django (Vem como JSON String, o 'safe' remove as aspas de proteção)
+        const labels = {{ chart_dates|safe }};
+        const data = {{ chart_values|safe }};
 
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Receita (R$)',
-                data: data,
-                backgroundColor: 'rgba(16, 185, 129, 0.2)', // Emerald-500 com opacidade
-                borderColor: 'rgba(16, 185, 129, 1)',
-                borderWidth: 1,
-                borderRadius: 4,
-                barPercentage: 0.6
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: { color: '#f3f4f6' }
-                },
-                x: {
-                    grid: { display: false }
-                }
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Faturamento (R$)',
+                    data: data,
+                    backgroundColor: 'rgba(16, 185, 129, 0.2)', // Emerald
+                    borderColor: 'rgba(16, 185, 129, 1)',
+                    borderWidth: 2,
+                    borderRadius: 4,
+                    barPercentage: 0.6,
+                    hoverBackgroundColor: 'rgba(16, 185, 129, 0.4)'
+                }]
             },
-            plugins: {
-                legend: { display: false }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#f3f4f6' },
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + value;
+                            }
+                        }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
             }
-        }
+        });
     });
 </script>
 {% endblock %}
