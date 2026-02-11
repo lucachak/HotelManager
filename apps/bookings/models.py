@@ -27,7 +27,8 @@ class Booking(UUIDModel, TimeStampedModel):
         max_length=20,
         choices=Status.choices,
         default=Status.PENDING,
-        verbose_name=_("Status da Reserva")
+        verbose_name=_("Status da Reserva"),
+        db_index=True
     )
 
     notes = models.TextField(_("Observações"), blank=True)

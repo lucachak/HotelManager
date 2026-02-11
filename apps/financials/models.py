@@ -111,7 +111,7 @@ class Transaction(UUIDModel, TimeStampedModel):
     )
 
     # AUMENTAMOS O TAMANHO PARA 20 CARACTERES (para caber 'CONSUMPTION')
-    transaction_type = models.CharField(max_length=20, choices=Type.choices, default=Type.INCOME)
+    transaction_type = models.CharField(max_length=20, choices=Type.choices, default=Type.INCOME, db_index=True)
 
     amount = models.DecimalField(_("Valor"), max_digits=10, decimal_places=2)
     description = models.CharField(_("Descrição"), max_length=255)
