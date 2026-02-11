@@ -80,3 +80,27 @@ class CashierService:
         # Baixa Estoque
         product.stock -= quantity
         product.save()
+
+
+    @staticmethod
+    def register_restock(product, quantity, cost, user):
+        """
+        Adiciona estoque e lança despesa no caixa (se houver custo).
+        """
+        # 1. Atualiza Estoque
+        product.stock += quantity
+        product.save()
+
+        # 2. Se teve custo, lança Despesa no Caixa
+        if cost and cost > 0:
+            session = CashierService.get_current_session(user)
+            if not session:
+                raise ValidationError("Abra o caixa para lançar o custo desta reposição.")
+
+            Transaction.objects.create(
+                session=session,
+                amount=cost, # Será convertido para negativo no save() do model
+                transaction_type=Transaction.Type.EXPENSE,
+                payment_method=None, # Saída de Caixa (Dinheiro)
+                description=f"Compra Estoque: {quantity}x {product.name}"
+            )

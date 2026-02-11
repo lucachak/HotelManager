@@ -1,0 +1,35 @@
+<div id="restock-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="document.getElementById('restock-modal').remove()"></div>
+
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm relative z-10 overflow-hidden animate-fade-in">
+
+        <div class="bg-gray-800 p-4 text-white flex justify-between items-center">
+            <h3 class="font-bold text-lg flex items-center gap-2">
+                <i data-lucide="archive-restore" class="w-5 h-5"></i> Repor {{ product.name }}
+            </h3>
+            <button onclick="document.getElementById('restock-modal').remove()" class="btn btn-ghost btn-circle btn-sm text-white">✕</button>
+        </div>
+
+        <form hx-post="{% url 'restock_product_modal' product.id %}" class="p-6 space-y-4">
+
+            <div class="form-control">
+                <label class="label font-bold text-gray-600">Quantas unidades chegaram?</label>
+                {{ form.quantity }}
+            </div>
+
+            <div class="form-control">
+                <label class="label font-bold text-gray-600">Custo Total (R$)</label>
+                {{ form.cost_price }}
+                <label class="label">
+                    <span class="label-text-alt text-gray-400">Opcional. Se preenchido, sai do caixa.</span>
+                </label>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-4">
+                <button type="button" onclick="document.getElementById('restock-modal').remove()" class="btn btn-ghost">Cancelar</button>
+                <button type="submit" class="btn btn-primary text-white">Confirmar Entrada</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>lucide.createIcons();</script>

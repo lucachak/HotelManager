@@ -14,9 +14,9 @@ from django.shortcuts import render, get_object_or_404, redirect
 
 
 from apps.bookings.models import Booking
-from apps.financials.models import Transaction, CashRegisterSession, PaymentMethod
+from apps.financials.models import Transaction, CashRegisterSession, PaymentMethod, Product
 from apps.financials.services import CashierService
-from apps.financials.forms import ReceivePaymentForm, ConsumptionForm
+from apps.financials.forms import ReceivePaymentForm, ConsumptionForm, RestockForm
 from apps.accommodations.views import room_details_modal
 
 # --- Views de Caixa ---
@@ -248,3 +248,44 @@ def print_receipt_pdf(request, booking_id):
         'today': timezone.now()
     }
     return render(request, 'financials/print/receipt.html', context)
+
+
+
+@login_required
+def stock_dashboard(request):
+    """
+    Lista produtos e permite reposição.
+    """
+    if not request.user.is_manager_or_admin:
+        raise PermissionDenied()
+
+    # Ordena produtos com menos estoque primeiro
+    products = Product.objects.all().order_by('stock', 'name')
+
+    context = {'products': products}
+    return render(request, 'financials/stock/dashboard.html', context)
+
+@login_required
+def restock_product_modal(request, product_id):
+    product = get_object_or_404(Product, pk=product_id)
+
+    if request.method == "POST":
+        form = RestockForm(request.POST)
+        if form.is_valid():
+            try:
+                qty = form.cleaned_data['quantity']
+                cost = form.cleaned_data['cost_price']
+
+                CashierService.register_restock(product, qty, cost, request.user)
+                messages.success(request, f"Estoque de {product.name} atualizado (+{qty})!")
+
+                # Fecha modal e recarrega a página
+                return HttpResponse(status=204, headers={'HX-Refresh': 'true'})
+            except Exception as e:
+                messages.error(request, str(e))
+    else:
+        form = RestockForm()
+
+    return render(request, 'financials/stock/restock_modal.html', {
+        'form': form, 'product': product
+    })

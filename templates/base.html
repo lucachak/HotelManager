@@ -98,6 +98,7 @@
                             </a>
                         </li>
 
+
                         {% if request.user.is_staff  %}
                         <div class="divider my-1 text-xs text-gray-300 font-bold uppercase tracking-wider">Gestão</div>
 
@@ -116,6 +117,11 @@
                                     <li>
                                         <a href="{% url 'financial_dashboard' %}" class="{% if 'reports/dashboard' in request.path %}text-primary font-bold{% endif %}">
                                             Relatórios
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{% url 'stock_dashboard' %}" class="{% if 'stock' in request.path %}text-primary font-bold{% endif %}">
+                                            Estoque
                                         </a>
                                     </li>
                                 </ul>

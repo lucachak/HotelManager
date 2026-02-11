@@ -55,3 +55,19 @@ class ConsumptionForm(forms.Form):
         initial=1,
         widget=forms.NumberInput(attrs={'class': 'input input-bordered w-full'})
     )
+
+
+class RestockForm(forms.Form):
+    quantity = forms.IntegerField(
+        label="Quantidade Recebida",
+        min_value=1,
+        widget=forms.NumberInput(attrs={'class': 'input input-bordered w-full'})
+    )
+
+    cost_price = forms.DecimalField(
+        label="Custo Total (R$)",
+        required=False,
+        min_value=0,
+        help_text="Deixe zerado se já foi pago ou for apenas ajuste.",
+        widget=forms.NumberInput(attrs={'class': 'input input-bordered w-full', 'step': '0.01'})
+    )

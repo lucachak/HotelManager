@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Controle de Estoque | Hotel Lux{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h2 class="text-3xl font-bold text-gray-800">Controle de Estoque</h2>
+            <p class="text-gray-500">Gerencie produtos do frigobar e bar.</p>
+        </div>
+
+        <a href="/admin/financials/product/add/" target="_blank" class="btn btn-primary text-white gap-2">
+            <i data-lucide="plus" class="w-4 h-4"></i> Novo Produto
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for product in products %}
+
+        <div class="card bg-white shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <div class="card-body p-5">
+
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg">{{ product.name }}</h3>
+                        <p class="text-sm text-gray-400">Preço Venda: R$ {{ product.price }}</p>
+                    </div>
+
+                    {% if product.stock == 0 %}
+                        <div class="badge badge-error text-white font-bold">Esgotado</div>
+                    {% elif product.stock < 10 %}
+                        <div class="badge badge-warning text-white font-bold">Baixo</div>
+                    {% else %}
+                        <div class="badge badge-success text-white font-bold">OK</div>
+                    {% endif %}
+                </div>
+
+                <div class="py-4 flex items-center gap-2">
+                    <i data-lucide="package" class="w-5 h-5 text-gray-400"></i>
+                    <span class="text-3xl font-bold {% if product.stock < 10 %}text-amber-500{% else %}text-gray-700{% endif %}">
+                        {{ product.stock }}
+                    </span>
+                    <span class="text-xs text-gray-400 uppercase font-bold mt-2">Unidades</span>
+                </div>
+
+                <div class="card-actions mt-2">
+                    <button
+                        hx-get="{% url 'restock_product_modal' product.id %}"
+                        hx-target="#booking-modal-container"
+                        hx-swap="innerHTML"
+                        class="btn btn-sm btn-outline w-full gap-2">
+                        <i data-lucide="archive-restore" class="w-4 h-4"></i> Repor Estoque
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}
