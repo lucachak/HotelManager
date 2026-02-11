@@ -3,12 +3,12 @@ from django.utils.translation import gettext_lazy as _
 from apps.core.mixins import UUIDModel, TimeStampedModel
 
 class Guest(UUIDModel, TimeStampedModel):
-    name = models.CharField(_("Nome Completo"), max_length=255)
-    email = models.EmailField(_("E-mail"), blank=True)
+    name = models.CharField(_("Nome Completo"), max_length=255, db_index=True)
+    email = models.EmailField(_("E-mail"), blank=True, db_index=True)
     phone = models.CharField(_("Telefone/WhatsApp"), max_length=20)
 
     # Documentos (Crucial para hotelaria)
-    cpf = models.CharField(_("CPF"), max_length=14, blank=True, null=True, unique=True)
+    cpf = models.CharField(_("CPF"), max_length=14, blank=True, null=True, unique=True, db_index=True)
     passport = models.CharField(_("Passaporte"), max_length=50, blank=True, null=True)
     document = models.CharField(_("Documento (CPF/Passaporte)"), max_length=20, blank=True)
 

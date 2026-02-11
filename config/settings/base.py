@@ -37,7 +37,6 @@ LOCAL_APPS = [
     'apps.guests',           # Hóspedes e FNRH
     'apps.bookings',         # Motor de reservas
     'apps.financials',       # Caixas e Transações
-    'apps.consumption',      # Produtos e Estoque
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
