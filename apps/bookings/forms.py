@@ -2,10 +2,18 @@ from django import forms
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from apps.guests.models import Guest
+from apps.accommodations.models import Room # <--- Importe o Room
 
 class QuickBookingForm(forms.Form):
+    room = forms.ModelChoiceField(
+            # CORREÇÃO: Apenas UM queryset.
+            queryset=Room.objects.all().order_by('number'),
+            label="Quarto",
+            widget=forms.Select(attrs={'class': 'select select-bordered w-full'})
+        )
+
     guest = forms.ModelChoiceField(
-        queryset=Guest.objects.all(),
+        queryset=Guest.objects.all().order_by('name'),
         label="Hóspede Principal",
         widget=forms.Select(attrs={'class': 'select select-bordered w-full'})
     )

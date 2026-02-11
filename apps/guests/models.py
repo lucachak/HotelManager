@@ -10,6 +10,7 @@ class Guest(UUIDModel, TimeStampedModel):
     # Documentos (Crucial para hotelaria)
     cpf = models.CharField(_("CPF"), max_length=14, blank=True, null=True, unique=True)
     passport = models.CharField(_("Passaporte"), max_length=50, blank=True, null=True)
+    document = models.CharField(_("Documento (CPF/Passaporte)"), max_length=20, blank=True)
 
     # Endereço (Obrigatório para FNRH)
     address = models.CharField(_("Endereço"), max_length=255, blank=True)

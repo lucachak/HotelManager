@@ -1,0 +1,130 @@
+{% extends 'base.html' %} {% block title %}Auditoria de Turnos | Hotel Lux{%
+endblock %} {% block content %}
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Histórico de Caixas</h1>
+      <p class="text-gray-500">Auditoria financeira e controle de turnos.</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="stats shadow bg-white border border-gray-100">
+      <div class="stat">
+        <div class="stat-figure text-emerald-500">
+          <i data-lucide="check-circle" class="w-8 h-8"></i>
+        </div>
+        <div class="stat-title">Turnos Auditados</div>
+        <div class="stat-value">{{ sessions.count }}</div>
+      </div>
+    </div>
+
+    <div class="stats shadow bg-white border border-gray-100">
+      <div class="stat">
+        <div class="stat-figure text-rose-500">
+          <i data-lucide="trending-down" class="w-8 h-8"></i>
+        </div>
+        <div class="stat-title">Total de Quebras</div>
+        <div class="stat-value text-rose-500">R$ {{ total_shortage }}</div>
+        <div class="stat-desc">Dinheiro que faltou nos caixas</div>
+      </div>
+    </div>
+
+    <div class="stats shadow bg-white border border-gray-100">
+      <div class="stat">
+        <div class="stat-figure text-blue-500">
+          <i data-lucide="trending-up" class="w-8 h-8"></i>
+        </div>
+        <div class="stat-title">Total de Sobras</div>
+        <div class="stat-value text-blue-500">R$ {{ total_surplus }}</div>
+        <div class="stat-desc">Dinheiro que sobrou nos caixas</div>
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-200"
+  >
+    <table class="table w-full">
+      <thead class="bg-gray-50 text-gray-500">
+        <tr>
+          <th>Funcionário</th>
+          <th>Fechamento</th>
+          <th>Saldo Inicial</th>
+          <th>Saldo Final (Declarado)</th>
+          <th>Diferença (Quebra)</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for session in sessions %}
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td>
+            <div class="flex items-center gap-3">
+              <div class="avatar placeholder">
+                <div class="bg-neutral text-neutral-content rounded-full w-8">
+                  <span class="text-xs"
+                    >{{ session.user.email|slice:":2"|upper }}</span
+                  >
+                </div>
+              </div>
+              <div>
+                <div class="font-bold">
+                  {{ session.user.get_full_name|default:session.user.email }}
+                </div>
+                <div class="text-xs opacity-50">
+                  {{ session.user.get_role_display }}
+                </div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="font-mono text-xs">
+              {{ session.closed_at|date:"d/m/Y" }}
+            </div>
+            <div class="font-mono text-xs text-gray-400">
+              {{ session.closed_at|date:"H:i" }}
+            </div>
+          </td>
+          <td class="font-mono">R$ {{ session.opening_balance }}</td>
+          <td class="font-mono font-bold">R$ {{ session.closing_balance }}</td>
+          <td>
+            {% if session.difference < 0 %}
+            <span class="badge badge-error gap-1 text-white font-bold">
+              <i data-lucide="arrow-down" class="w-3 h-3"></i> {{
+              session.difference }}
+            </span>
+            {% elif session.difference > 0 %}
+            <span class="badge badge-info gap-1 text-white font-bold">
+              <i data-lucide="arrow-up" class="w-3 h-3"></i> +{{
+              session.difference }}
+            </span>
+            {% else %}
+            <span class="badge badge-ghost gap-1 text-gray-400">
+              <i data-lucide="check" class="w-3 h-3"></i> OK
+            </span>
+            {% endif %}
+          </td>
+          <td>
+            <button
+              hx-get="{% url 'shift_details_modal' session.id %}"
+              hx-target="#booking-modal-container"
+              hx-swap="innerHTML"
+              class="btn btn-ghost btn-xs"
+            >
+              Ver Detalhes
+            </button>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center py-10 text-gray-400">
+            Nenhum turno fechado encontrado.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

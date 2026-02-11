@@ -1,40 +1,46 @@
-<div id="modal-backdrop" class="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden relative animate-fade-in">
+<div id="modal-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div class="absolute inset-0" onclick="document.getElementById('modal-backdrop').remove()"></div>
+
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative z-10">
 
         <div class="bg-primary p-4 text-white flex justify-between items-center">
             <h3 class="font-bold text-lg flex items-center gap-2">
                 <i data-lucide="key" class="w-5 h-5"></i> Abrir Novo Turno
             </h3>
-            <button onclick="document.getElementById('modal-backdrop').remove()" class="btn btn-ghost btn-circle btn-sm text-white">✕</button>
+            <button onclick="document.getElementById('modal-backdrop').remove()" class="btn btn-ghost btn-circle btn-sm text-white hover:bg-white/20">✕</button>
         </div>
 
-        <form hx-post="{% url 'open_register_action' %}" hx-swap="outerHTML">
-            <div class="p-6 space-y-4">
+        <form hx-post="{% url 'open_register_action' %}"
+              hx-target="#booking-modal-container"
+              hx-swap="innerHTML">
 
+            <div class="p-6 space-y-4">
                 {% if error %}
-                <div class="alert alert-error text-sm text-white">
-                    <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                <div class="alert alert-error text-white text-sm shadow-md">
+                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
                     <span>{{ error }}</span>
                 </div>
                 {% endif %}
 
-                <div class="alert alert-info text-sm">
+                <div class="alert alert-info text-sm shadow-sm">
                     <i data-lucide="info" class="w-4 h-4"></i>
-                    <span>Você está iniciando um novo turno. Conte o dinheiro físico na gaveta.</span>
+                    <span>Iniciando turno. Conte o dinheiro físico na gaveta.</span>
                 </div>
 
                 <div class="form-control">
-                    <label class="label"><span class="label-text font-bold">Saldo Inicial (Troco)</span></label>
-                    <label class="input input-bordered flex items-center gap-2">
-                        R$
-                        <input type="number" name="opening_balance" step="0.01" class="grow" placeholder="0.00" required autofocus />
+                    <label class="label"><span class="label-text font-bold text-gray-700">Saldo Inicial (Troco)</span></label>
+                    <label class="input input-bordered flex items-center gap-2 focus-within:outline-primary">
+                        <span class="font-bold text-gray-500">R$</span>
+                        <input type="number" name="opening_balance" step="0.01" class="grow font-bold text-lg" placeholder="0.00" required autofocus />
                     </label>
                 </div>
             </div>
 
             <div class="p-4 bg-gray-50 border-t flex justify-end gap-2">
                 <button type="button" onclick="document.getElementById('modal-backdrop').remove()" class="btn btn-ghost">Cancelar</button>
-                <button type="submit" class="btn btn-primary">Iniciar Turno</button>
+                <button type="submit" class="btn btn-primary shadow-lg shadow-primary/30">
+                    Iniciar Turno
+                </button>
             </div>
         </form>
     </div>

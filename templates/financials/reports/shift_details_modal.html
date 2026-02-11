@@ -1,0 +1,107 @@
+<div
+  id="modal-backdrop"
+  class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in"
+>
+  <div
+    class="absolute inset-0"
+    onclick="document.getElementById('modal-backdrop').remove()"
+  ></div>
+
+  <div
+    class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden relative z-10 flex flex-col max-h-[90vh]"
+  >
+    <div class="bg-gray-800 p-4 text-white flex justify-between items-center">
+      <div>
+        <h3 class="font-bold text-lg">Detalhamento de Turno</h3>
+        <p class="text-xs text-gray-400">
+          Operador: {{ session.user.get_full_name|default:session.user.email }}
+        </p>
+      </div>
+      <button
+        onclick="document.getElementById('modal-backdrop').remove()"
+        class="btn btn-ghost btn-circle btn-sm text-white"
+      >
+        ✕
+      </button>
+    </div>
+
+    <div class="p-4 bg-gray-50 border-b flex justify-around text-center">
+      <div>
+        <p class="text-xs text-gray-500 uppercase">Abertura</p>
+        <p class="font-mono font-bold">R$ {{ session.opening_balance }}</p>
+      </div>
+      <div>
+        <p class="text-xs text-gray-500 uppercase">Sistema Calculou</p>
+        <p class="font-mono font-bold text-blue-600">
+          R$ {{ session.calculated_balance }}
+        </p>
+      </div>
+      <div>
+        <p class="text-xs text-gray-500 uppercase">Fechamento Real</p>
+        <p class="font-mono font-bold text-gray-800">
+          R$ {{ session.closing_balance }}
+        </p>
+      </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-0">
+      <table class="table table-pin-rows w-full">
+        <thead>
+          <tr>
+            <th>Hora</th>
+            <th>Descrição</th>
+            <th>Método</th>
+            <th class="text-right">Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in transactions %}
+          <tr class="hover:bg-gray-50">
+            <td class="font-mono text-xs text-gray-500">
+              {{ t.created_at|date:"H:i" }}
+            </td>
+            <td>
+              <div class="font-medium text-sm">{{ t.description }}</div>
+              {% if t.booking %}
+              <div
+                class="text-[10px] bg-blue-50 text-blue-600 px-1 rounded inline-block"
+              >
+                Ref: {{ t.booking.guest.name }}
+              </div>
+              {% endif %}
+            </td>
+            <td>
+              <span class="badge badge-sm badge-ghost"
+                >{{ t.payment_method.name }}</span
+              >
+            </td>
+            <td
+              class="text-right font-mono font-bold {% if t.amount < 0 %}text-rose-500{% else %}text-emerald-600{% endif %}"
+            >
+              {{ t.amount }}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="text-center py-8 text-gray-400">
+              Nenhuma transação neste turno.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="p-4 border-t bg-gray-50">
+      {% if session.closing_notes %}
+      <div class="alert alert-warning text-xs py-2">
+        <span class="font-bold">Observação do Operador:</span> {{
+        session.closing_notes }}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+<script>
+  lucide.createIcons();
+</script>

@@ -1,6 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import PaymentMethod
+from .models import PaymentMethod, Product
+from decimal import Decimal
 
 class ReceivePaymentForm(forms.Form):
     amount = forms.DecimalField(
@@ -31,14 +32,33 @@ class ReceivePaymentForm(forms.Form):
     def clean_amount(self):
         amount = self.cleaned_data['amount']
 
-        # Validação 1: Valor negativo ou zero
+        # 1. Arredonda para 2 casas (Mata o problema dos 10 centavos fantasmas)
+        amount = round(Decimal(amount), 2)
+
+        # 2. Valida valor positivo
         if amount <= 0:
             raise ValidationError("O valor deve ser positivo.")
 
-        # Validação 2: Pagamento maior que a dívida
+        # 3. Valida Overpayment (Pagar a mais)
         if self.balance_due is not None:
-            # Tolerância de 1 centavo para erros de arredondamento
-            if amount > (self.balance_due + 0.01):
-                raise ValidationError(f"O valor (R$ {amount}) é maior que a dívida restante (R$ {self.balance_due}).")
+            balance = round(Decimal(self.balance_due), 2)
+            # Tolerância Zero: Se pagar 1 centavo a mais, bloqueia.
+            if amount > balance:
+                raise ValidationError(f"Valor excessivo! Resta pagar apenas R$ {balance}.")
 
         return amount
+
+class ConsumptionForm(forms.Form):
+    product = forms.ModelChoiceField(
+        queryset=Product.objects.filter(is_active=True, stock__gt=0), # Só mostra o que tem estoque
+        label="Produto",
+        empty_label="Selecione o item...",
+        widget=forms.Select(attrs={'class': 'select select-bordered w-full'})
+    )
+
+    quantity = forms.IntegerField(
+        label="Quantidade",
+        min_value=1,
+        initial=1,
+        widget=forms.NumberInput(attrs={'class': 'input input-bordered w-full'})
+    )

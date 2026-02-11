@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from apps.core.mixins import UUIDModel, TimeStampedModel
 from decimal import Decimal
 
+
 class PaymentMethod(UUIDModel, TimeStampedModel):
     """
     Ex: PIX, Cartão de Crédito, Dinheiro.
@@ -14,6 +15,22 @@ class PaymentMethod(UUIDModel, TimeStampedModel):
 
     def __str__(self):
         return self.name
+
+
+
+class Product(UUIDModel, TimeStampedModel):
+    name = models.CharField(_("Nome do Produto"), max_length=100)
+    price = models.DecimalField(_("Preço de Venda"), max_digits=10, decimal_places=2)
+    stock = models.PositiveIntegerField(_("Estoque Atual"), default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = _("Produto")
+        verbose_name_plural = _("Produtos")
+        ordering = ['name']
+
+    def __str__(self):
+        return f"{self.name} (R$ {self.price})"
 
 
 class CashRegisterSession(UUIDModel, TimeStampedModel):
@@ -66,9 +83,10 @@ class Transaction(UUIDModel, TimeStampedModel):
     Cada centavo que entra ou sai do hotel.
     """
     class Type(models.TextChoices):
-        INCOME = 'INCOME', _('Receita (Entrada)')
-        EXPENSE = 'EXPENSE', _('Despesa (Saída)')
-        REFUND = 'REFUND', _('Estorno')
+            INCOME = 'INCOME', _('Receita (Pagamento)')
+            EXPENSE = 'EXPENSE', _('Despesa (Saída)')
+            REFUND = 'REFUND', _('Estorno')
+            CONSUMPTION = 'CONSUMPTION', _('Consumo (Frigobar/Bar)')
 
     session = models.ForeignKey(
         CashRegisterSession,
@@ -91,7 +109,14 @@ class Transaction(UUIDModel, TimeStampedModel):
         verbose_name=_("Método de Pagamento")
     )
 
-    transaction_type = models.CharField(max_length=10, choices=Type.choices, default=Type.INCOME)
+    product = models.ForeignKey(
+         Product,
+         on_delete=models.SET_NULL,
+         null=True, blank=True,
+         verbose_name=_("Produto Consumido")
+     )
+
+    transaction_type = models.CharField(max_length=20, choices=Type.choices, default=Type.INCOME)
     amount = models.DecimalField(_("Valor"), max_digits=10, decimal_places=2)
     description = models.CharField(_("Descrição"), max_length=255)
 

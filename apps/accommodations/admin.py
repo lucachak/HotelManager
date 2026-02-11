@@ -9,24 +9,28 @@ class RoomCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Room)
 class RoomAdmin(admin.ModelAdmin):
-    list_display = ('number', 'category', 'status_color', 'floor')
+    list_display = ('number', 'category', 'status_badge', 'floor') # Mudei o nome para status_badge
     list_filter = ('status', 'category', 'floor')
     search_fields = ('number',)
+    ordering = ['number'] # Garante a ordem correta
 
+    # Campo readonly para não deixar mudar status manualmente sem usar as transições
     readonly_fields = ['status']
 
-
-    def status_color(self, obj):
+    def status_badge(self, obj):
+        """
+        Cria um badge colorido bonito para o Admin.
+        """
         colors = {
-            'AVAILABLE': 'green',
-            'OCCUPIED': 'red',
-            'DIRTY': 'orange',
-            'MAINTENANCE': 'gray',
+            'AVAILABLE': '#10B981', # Verde Emerald
+            'OCCUPIED': '#F43F5E',  # Vermelho Rose
+            'DIRTY': '#F59E0B',     # Amarelo Amber
+            'MAINTENANCE': '#6B7280', # Cinza
         }
-        color = colors.get(obj.status, 'black')
+        color = colors.get(obj.status, '#000000')
         return format_html(
-            '<span style="color: {}; font-weight: bold;">{}</span>',
+            '<span style="background-color: {}; color: white; padding: 3px 10px; border-radius: 10px; font-weight: bold;">{}</span>',
             color,
             obj.get_status_display()
         )
-    status_color.short_description = 'Status'
+    status_badge.short_description = 'Status'

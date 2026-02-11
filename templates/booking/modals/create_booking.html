@@ -4,28 +4,41 @@
         <h3 class="font-bold text-lg flex items-center gap-2">
             <i data-lucide="calendar-plus" class="w-5 h-5"></i> Nova Reserva
         </h3>
-        <button onclick="document.getElementById('room-modal').remove()" class="btn btn-ghost btn-circle btn-sm text-white hover:bg-white/20">✕</button>
+        <button onclick="document.getElementById('booking-modal-container').innerHTML = ''" class="btn btn-ghost btn-circle btn-sm text-white hover:bg-white/20">✕</button>
     </div>
 
-    <form hx-post="{% url 'create_booking_htmx' %}?room={{ room.id }}"
+    <form hx-post="{% url 'create_booking_htmx' %}{% if room %}?room={{ room.id }}{% endif %}"
           hx-target="#modal-content-card"
           hx-swap="outerHTML"
           class="flex flex-col flex-1 overflow-hidden">
 
         <div class="p-6 space-y-4 overflow-y-auto flex-1">
 
-            <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                <div class="badge badge-lg bg-emerald-100 text-emerald-600 font-bold border-none">
-                    {{ room.number }}
+            {% if room %}
+                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                    <div class="badge badge-lg bg-emerald-100 text-emerald-600 font-bold border-none">
+                        {{ room.number }}
+                    </div>
+                    <div>
+                        <p class="font-bold text-gray-800">{{ room.category.name }}</p>
+                        <p class="text-xs text-gray-500">R$ {{ room.category.base_price }} / noite</p>
+                    </div>
                 </div>
-                <div>
-                    <p class="font-bold text-gray-800">{{ room.category.name }}</p>
-                    <p class="text-xs text-gray-500">R$ {{ room.category.base_price }} / noite</p>
+                <div class="hidden">
+                    {{ form.room }}
                 </div>
-            </div>
+            {% else %}
+                <div class="form-control">
+                    <label class="label font-bold text-gray-600">Escolha o Quarto</label>
+                    {{ form.room }}
+                    {% if form.room.errors %}
+                        <span class="text-error text-xs mt-1">{{ form.room.errors.0 }}</span>
+                    {% endif %}
+                </div>
+            {% endif %}
 
             {% if error %}
-            <div class="alert alert-error text-white text-sm shadow-md animate-pulse">
+            <div class="alert alert-error text-white text-sm shadow-md">
                 <i data-lucide="alert-circle" class="w-5 h-5"></i>
                 <span>{{ error }}</span>
             </div>
@@ -34,11 +47,8 @@
             <div class="form-control">
                 <label class="label font-bold text-gray-600">Hóspede</label>
                 {{ form.guest }}
-                {% if form.guest.errors %}
-                    <span class="text-error text-xs mt-1">{{ form.guest.errors.0 }}</span>
-                {% endif %}
                 <label class="label">
-                    <span class="label-text-alt text-gray-400">Não achou? Cadastre na aba Hóspedes.</span>
+                    <span class="label-text-alt text-gray-400">Não achou? Cadastre em Hóspedes primeiro.</span>
                 </label>
             </div>
 
@@ -52,20 +62,16 @@
                     {{ form.end_date }}
                 </div>
             </div>
+
         </div>
 
         <div class="p-4 bg-gray-50 border-t flex justify-end gap-2">
-            <button
-                type="button"
-                hx-get="{% url 'room_details_modal' room.id %}"
-                hx-target="#room-modal"
-                hx-swap="outerHTML"
-                class="btn btn-ghost">
-                Voltar
+            <button type="button" onclick="document.getElementById('booking-modal-container').innerHTML = ''" class="btn btn-ghost">
+                Cancelar
             </button>
 
             <button type="submit" class="btn btn-primary shadow-lg shadow-primary/30 text-white">
-                <i data-lucide="check" class="w-4 h-4"></i> Confirmar
+                <i data-lucide="check" class="w-4 h-4"></i> Confirmar Reserva
             </button>
         </div>
     </form>

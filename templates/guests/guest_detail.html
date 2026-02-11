@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ guest.name }} | Hotel Lux{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+
+    <div class="flex items-center gap-4">
+        <a href="{% url 'guest_list' %}" class="btn btn-circle btn-ghost btn-sm">
+            <i data-lucide="arrow-left" class="w-5 h-5"></i>
+        </a>
+        <div>
+            <h2 class="text-3xl font-bold text-gray-800">{{ guest.name }}</h2>
+            <p class="text-gray-500 text-sm">Cadastrado em {{ guest.created_at|date:"d/m/Y" }}</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <div class="card bg-white shadow-sm border border-gray-100 h-fit">
+            <div class="card-body">
+                <h3 class="card-title text-lg mb-4 flex items-center gap-2">
+                    <i data-lucide="user" class="w-5 h-5 text-primary"></i> Dados Pessoais
+                </h3>
+
+                <div class="space-y-4">
+                    <div>
+                        <span class="text-xs text-gray-400 uppercase font-bold">Email</span>
+                        <div class="font-medium">{{ guest.email|default:"-" }}</div>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-400 uppercase font-bold">Telefone</span>
+                        <div class="font-medium">{{ guest.phone|default:"-" }}</div>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-400 uppercase font-bold">Documento</span>
+                        <div class="font-medium font-mono bg-gray-50 p-1 rounded inline-block">{{ guest.document|default:"-" }}</div>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-400 uppercase font-bold">Endereço</span>
+                        <div class="font-medium">{{ guest.address|default:"-" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="md:col-span-2 space-y-6">
+
+            <div class="card bg-white shadow-sm border border-gray-100">
+                <div class="card-body">
+                    <h3 class="card-title text-lg mb-4 flex items-center gap-2">
+                        <i data-lucide="history" class="w-5 h-5 text-primary"></i> Histórico de Reservas
+                    </h3>
+
+                    <div class="overflow-x-auto">
+                        <table class="table w-full">
+                            <thead class="bg-gray-50 text-gray-500 uppercase text-xs font-bold">
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Quarto</th>
+                                    <th>Status</th>
+                                    <th>Valor Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in bookings %}
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td>
+                                        <div class="text-sm font-bold">{{ booking.created_at|date:"d/m/Y" }}</div>
+                                        <div class="text-xs text-gray-400">{{ booking.created_at|date:"H:i" }}</div>
+                                    </td>
+                                    <td>
+                                        {% for alloc in booking.allocations.all %}
+                                            <span class="badge badge-ghost badge-sm">{{ alloc.room.number }}</span>
+                                        {% empty %}
+                                            <span class="text-gray-400">-</span>
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        {% if booking.status == 'CONFIRMED' %}
+                                            <span class="badge badge-info gap-1 text-white">Confirmada</span>
+                                        {% elif booking.status == 'CHECKED_IN' %}
+                                            <span class="badge badge-success gap-1 text-white">Hospedado</span>
+                                        {% elif booking.status == 'COMPLETED' %}
+                                            <span class="badge badge-neutral gap-1">Finalizada</span>
+                                        {% elif booking.status == 'CANCELED' %}
+                                            <span class="badge badge-ghost gap-1">Cancelada</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">{{ booking.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="font-mono font-bold text-gray-600">
+                                        R$ {{ booking.total_value }}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-8 text-gray-400">
+                                        Nenhuma reserva encontrada para este hóspede.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

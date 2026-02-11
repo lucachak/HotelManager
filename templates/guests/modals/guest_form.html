@@ -1,0 +1,50 @@
+<div id="modal-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div class="absolute inset-0" onclick="document.getElementById('modal-backdrop').remove()"></div>
+
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 overflow-hidden">
+
+        <div class="bg-primary p-4 text-white flex justify-between items-center">
+            <h3 class="font-bold text-lg flex items-center gap-2">
+                <i data-lucide="user-plus" class="w-5 h-5"></i> Cadastrar Hóspede
+            </h3>
+            <button onclick="document.getElementById('modal-backdrop').remove()" class="btn btn-ghost btn-circle btn-sm text-white hover:bg-white/20">✕</button>
+        </div>
+
+        <form hx-post="{% url 'guest_create' %}" hx-target="#booking-modal-container" hx-swap="innerHTML">
+            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+
+                <div class="form-control">
+                    <label class="label font-bold text-gray-600">Nome Completo</label>
+                    {{ form.name }}
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label font-bold text-gray-600">CPF / Passaporte</label>
+                        {{ form.document }}
+                    </div>
+                    <div class="form-control">
+                        <label class="label font-bold text-gray-600">Telefone</label>
+                        {{ form.phone }}
+                    </div>
+                </div>
+
+                <div class="form-control">
+                    <label class="label font-bold text-gray-600">E-mail</label>
+                    {{ form.email }}
+                </div>
+
+                <div class="form-control">
+                    <label class="label font-bold text-gray-600">Endereço</label>
+                    {{ form.address }}
+                </div>
+            </div>
+
+            <div class="p-4 bg-gray-50 border-t flex justify-end gap-2">
+                <button type="button" onclick="document.getElementById('modal-backdrop').remove()" class="btn btn-ghost">Cancelar</button>
+                <button type="submit" class="btn btn-primary text-white">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>lucide.createIcons();</script>

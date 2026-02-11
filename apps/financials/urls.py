@@ -2,12 +2,19 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('booking/<uuid:booking_id>/receive/', views.receive_payment_htmx, name='receive_payment'),
+    # Rota usada pelo Modal de Recebimento
     path('receive/<uuid:booking_id>/htmx/', views.receive_payment_htmx, name='receive_payment_htmx'),
 
+    # Rotas do Caixa (Status, Abrir, Fechar)
     path('cashier/status/', views.cashier_status, name='cashier_status'),
     path('cashier/open/modal/', views.open_register_modal, name='open_register_modal'),
     path('cashier/open/action/', views.open_register_action, name='open_register_action'),
     path('cashier/close/modal/', views.close_register_modal, name='close_register_modal'),
     path('cashier/close/action/', views.close_register_action, name='close_register_action'),
+
+
+    path('reports/shifts/', views.shift_history, name='shift_history'),
+    path('reports/shifts/<uuid:session_id>/', views.shift_details_modal, name='shift_details_modal'),
+
+    path('consumption/<uuid:booking_id>/add/', views.add_consumption_htmx, name='add_consumption_htmx'),
 ]

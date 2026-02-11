@@ -38,6 +38,37 @@ class CashierService:
             status=CashRegisterSession.Status.OPEN
         ).first()
 
+
+    @staticmethod
+    def register_consumption(booking, product, quantity, user):
+        """
+        Lança um consumo na conta.
+        """
+        if product.stock < quantity:
+            raise ValidationError(f"Estoque insuficiente! Só restam {product.stock} unidades de {product.name}.")
+
+        total_price = product.price * quantity
+
+        # Usa a sessão do caixa atual (opcional, mas bom para rastreio)
+        session = CashierService.get_current_session(user)
+
+        # 1. Cria a Transação
+        Transaction.objects.create(
+            session=session,
+            booking=booking,
+            product=product, # Vincula o produto
+            amount=total_price, # Valor POSITIVO (aumenta a conta)
+            transaction_type=Transaction.Type.CONSUMPTION,
+            payment_method=None, # Não é pagamento, é dívida
+            description=f"Consumo: {quantity}x {product.name}"
+        )
+
+        # 2. Baixa o Estoque
+        product.stock -= quantity
+        product.save()
+
+
+
     @staticmethod
     def close_session(session, declared_balance, notes=""):
         """

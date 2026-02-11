@@ -65,10 +65,17 @@
                     <div class="grid grid-cols-2 gap-3 mt-4">
                         <button
                             hx-get="{% url 'receive_payment_htmx' allocation.booking.id %}"
-                            hx-target="#modal-content-card"
-                            hx-swap="outerHTML transition:true"
+                            hx-target="#booking-modal-container"
+                            hx-swap="innerHTML"
                             class="btn btn-outline btn-success btn-sm w-full gap-2">
                             <i data-lucide="dollar-sign" class="w-4 h-4"></i> Receber
+                        </button>
+                        <button
+                            hx-get="{% url 'add_consumption_htmx' allocation.booking.id %}"
+                            hx-target="#booking-modal-container"
+                            hx-swap="innerHTML"
+                            class="btn btn-outline btn-success btn-sm w-full gap-2">
+                            <i data-lucide="dollar-sign" class="w-4 h-4"></i> Adicionar Consumo
                         </button>
                         <button
                             hx-post="{% url 'checkout_htmx' allocation.booking.id %}"

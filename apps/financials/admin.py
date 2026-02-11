@@ -1,6 +1,11 @@
 from django.contrib import admin
 from django.db.models import Sum
-from .models import PaymentMethod, CashRegisterSession, Transaction
+from .models import (
+    PaymentMethod,
+    CashRegisterSession,
+    Transaction,
+    Product
+)
 
 @admin.register(PaymentMethod)
 class PaymentMethodAdmin(admin.ModelAdmin):
@@ -10,8 +15,8 @@ class PaymentMethodAdmin(admin.ModelAdmin):
 class TransactionInline(admin.TabularInline):
     model = Transaction
     extra = 0
-    readonly_fields = ('created_at', 'amount', 'transaction_type', 'booking')
-    can_delete = False # Histórico financeiro é sagrado, não se deleta.
+    readonly_fields = ('created_at', 'amount', 'transaction_type', 'booking', 'description')
+    can_delete = False
 
 @admin.register(CashRegisterSession)
 class CashRegisterSessionAdmin(admin.ModelAdmin):
@@ -29,10 +34,18 @@ class CashRegisterSessionAdmin(admin.ModelAdmin):
 
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
+    # CORREÇÃO PRINCIPAL: Usamos 'transaction_type', não 'status'
     list_display = ('created_at', 'amount', 'transaction_type', 'payment_method', 'session', 'booking')
     list_filter = ('transaction_type', 'payment_method', 'created_at')
     search_fields = ('booking__guest__name', 'description')
 
-    # Proteção: Transações não devem ser editadas depois de criadas
     def has_change_permission(self, request, obj=None):
         return False
+
+
+
+@admin.register(Product)
+class ProductAdmin(admin.ModelAdmin):
+    list_display = ('name', 'price', 'stock', 'is_active')
+    search_fields = ('name',)
+    list_editable = ('price', 'stock') # Permite editar preço e estoque rápido na lista

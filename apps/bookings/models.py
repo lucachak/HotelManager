@@ -18,7 +18,7 @@ class Booking(UUIDModel, TimeStampedModel):
 
     guest = models.ForeignKey(
         'guests.Guest',
-        on_delete=models.PROTECT, # Se apagar o hóspede, a reserva fica (histórico)
+        on_delete=models.PROTECT,
         related_name='bookings',
         verbose_name=_("Hóspede Principal")
     )
@@ -34,50 +34,35 @@ class Booking(UUIDModel, TimeStampedModel):
 
     @property
     def total_value(self):
-        """Calcula o valor total somando os quartos alocados"""
-        total = Decimal('0.00')
-        for allocation in self.allocations.all():
-            days = (allocation.end_date - allocation.start_date).days
-            # Se for 0 dias (check-in e out no mesmo dia), cobra 1 diária
-            if days == 0: days = 1
-            total += (allocation.agreed_price or Decimal('0.00')) * days
-        return total
+        """Soma Quartos + Consumos (Valor Bruto)"""
+        total_rooms = sum(a.agreed_price for a in self.allocations.all()) or Decimal(0)
 
-    @property
-    def amount_paid(self):
-        """Soma todas as transações com status PAGO vinculadas a esta reserva"""
-        # Precisamos importar aqui dentro pra evitar erro de importação circular
+        # Soma consumos (que são do tipo CONSUMPTION e positivos)
         from apps.financials.models import Transaction
+        total_consumption = self.payments.filter(
+            transaction_type=Transaction.Type.CONSUMPTION
+        ).aggregate(models.Sum('amount'))['amount__sum'] or Decimal(0)
 
-        paid = self.transactions.filter(
-            status=Transaction.Status.PAID,
-            transaction_type=Transaction.Type.INCOME
-        ).aggregate(models.Sum('amount'))['amount__sum'] or Decimal('0.00')
-
-        return paid
-
-    @property
-    def total_value(self):
-        """Soma o valor de todos os quartos alocados"""
-        # aggregate retorna {'agreed_price__sum': Decimal('100.00')}
-        total = self.allocations.aggregate(models.Sum('agreed_price'))['agreed_price__sum']
-        return total or 0
+        return total_rooms + total_consumption
 
     @property
     def amount_paid(self):
         """Soma todas as transações do tipo INCOME vinculadas a esta reserva"""
-        # Import local para evitar erro de referência circular
         from apps.financials.models import Transaction
 
         paid = self.payments.filter(
             transaction_type=Transaction.Type.INCOME
         ).aggregate(models.Sum('amount'))['amount__sum']
 
-        return paid or 0
+        return paid or Decimal(0)
 
     @property
     def balance_due(self):
-        """Quanto falta pagar?"""
+        """
+        Saldo Devedor = (Total - Pago).
+        Se for negativo, significa que tem crédito/troco.
+        """
+        # CORREÇÃO: Antes você não estava subtraindo o valor pago!
         return self.total_value - self.amount_paid
 
 
@@ -109,12 +94,11 @@ class RoomAllocation(UUIDModel):
     start_date = models.DateField(_("Data de Entrada (Check-in)"))
     end_date = models.DateField(_("Data de Saída (Check-out)"))
 
-    # Preço congelado no momento da reserva
     agreed_price = models.DecimalField(
         _("Valor da Diária Acordado"),
         max_digits=10,
         decimal_places=2,
-        blank=True # Pode deixar em branco para o sistema puxar automático
+        blank=True
     )
 
     class Meta:
@@ -126,19 +110,25 @@ class RoomAllocation(UUIDModel):
 
     def clean(self):
         """
-        A GRANDE MURALHA DA CHINA DO SEU SISTEMA.
+        A GRANDE MURALHA DA CHINA DO SISTEMA.
         Impede Overbooking antes de salvar no banco.
         """
         if self.start_date and self.end_date and self.start_date >= self.end_date:
             raise ValidationError("A data de saída deve ser depois da data de entrada.")
 
+        # Busca conflitos de datas
         conflicts = RoomAllocation.objects.filter(
             room=self.room,
             start_date__lt=self.end_date,  # Começa antes de eu sair
             end_date__gt=self.start_date   # Termina depois de eu chegar
         ).exclude(id=self.id) # Ignora a si mesmo (caso seja uma edição)
 
-        conflicts = conflicts.exclude(booking__status=Booking.Status.CANCELED)
+        conflicts = conflicts.exclude(
+            booking__status__in=[
+                Booking.Status.CANCELED,
+                Booking.Status.COMPLETED
+            ]
+        )
 
         if conflicts.exists():
             conflict_list = ", ".join([str(c.booking) for c in conflicts])
@@ -150,5 +140,5 @@ class RoomAllocation(UUIDModel):
         if not self.agreed_price:
             self.agreed_price = self.room.category.base_price
 
-        self.clean() # Força a validação mesmo se salvar via código python
+        self.clean()
         super().save(*args, **kwargs)

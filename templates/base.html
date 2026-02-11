@@ -6,158 +6,162 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{% block title %}Hotel Manager{% endblock %}</title>
 
-        <link
-            href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css"
-            rel="stylesheet"
-            type="text/css"
-        />
+        <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
         <script src="https://cdn.tailwindcss.com"></script>
 
         <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 
         <script src="https://unpkg.com/lucide@latest"></script>
 
-        <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap"
-            rel="stylesheet"
-        />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
 
         <style>
-            body {
-                font-family: "Inter", sans-serif;
-            }
+            body { font-family: "Inter", sans-serif; }
+            .animate-fade-in { animation: fadeIn 0.2s ease-out; }
+            @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
         </style>
     </head>
-    <body
-        class="bg-base-200 min-h-screen flex"
-        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-    >
-        <aside class="w-64 bg-base-100 shadow-xl hidden md:flex flex-col z-20">
+
+    <body class="bg-base-200 min-h-screen flex" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+
+        <aside class="w-64 bg-base-100 shadow-xl hidden md:flex flex-col z-20 fixed h-full">
             <div class="p-6 text-center border-b border-base-200">
-                <h1 class="text-2xl font-bold text-primary tracking-wide">
-                    HOTEL<span class="text-secondary">LUX</span>
-                </h1>
-                <p class="text-xs text-gray-400 mt-1 uppercase tracking-widest">
-                    Management System
-                </p>
+                <div class="w-12 h-12 bg-primary text-white rounded-xl flex items-center justify-center mx-auto mb-2 shadow-lg shadow-primary/40">
+                    <i data-lucide="building-2" class="w-6 h-6"></i>
+                </div>
+                <h1 class="font-bold text-xl tracking-tight text-gray-800">Hotel<span class="text-primary">OS</span></h1>
+                <p class="text-xs text-gray-400 uppercase tracking-widest mt-1">Management</p>
             </div>
 
-            <nav class="flex-1 p-4 space-y-2">
+            <ul class="menu p-4 w-full text-base-content gap-2 flex-1 overflow-y-auto">
+                <li>
+                    <a href="/" class="flex items-center gap-3 p-3 rounded-xl hover:bg-base-200 transition-all {% if request.path == '/' %}bg-primary text-white shadow-lg shadow-primary/30{% endif %}">
+                        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                        <span class="font-medium">Visão Geral</span>
+                    </a>
+                </li>
 
-                <a
-                    href="{% url 'dashboard' %}"
-                    class="flex items-center gap-3 px-4 py-3 bg-primary/10 text-primary rounded-xl transition-all hover:shadow-sm"
-                >
-                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-                    <span class="font-medium">Dashboard</span>
-                </a>
+                <div class="divider my-2"></div>
+                <li>
+                    <h3 class="menu-title flex items-center gap-2 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Operação</h3>
+                    <ul class="menu-list space-y-1">
+                        <li>
+                            <a href="{% url 'guest_list' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-base-200 transition-all {% if 'guests' in request.path %}bg-primary text-white shadow-lg shadow-primary/30{% endif %}">
+                                <i data-lucide="users" class="w-5 h-5"></i>
+                                <span class="font-medium">Hóspedes</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'booking_list' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-base-200 transition-all {% if 'bookings/list' in request.path %}bg-primary text-white shadow-lg shadow-primary/30{% endif %}">
+                                <i data-lucide="calendar-days" class="w-5 h-5"></i>
+                                <span class="font-medium">Reservas</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
 
-                <a
-                    href="#"
-                    class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:bg-base-200 hover:text-gray-700 rounded-xl transition-all"
-                >
-                    <i data-lucide="calendar-check" class="w-5 h-5"></i>
-                    <span class="font-medium">Reservas</span>
-                </a>
+                {% if request.user.is_manager_or_admin %}
+                <div class="divider my-2"></div>
+                <li>
+                    <h3 class="menu-title flex items-center gap-2 px-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Gestão</h3>
+                    <ul class="menu-list">
+                        <li>
+                            <a href="{% url 'shift_history' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-base-200 {% if 'reports' in request.path %}bg-primary text-white{% endif %}">
+                                <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+                                <span class="font-medium">Auditoria de Caixa</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                {% endif %}
+            </ul>
 
-                <a
-                    href="#"
-                    class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:bg-base-200 hover:text-gray-700 rounded-xl transition-all"
-                >
-                    <i data-lucide="users" class="w-5 h-5"></i>
-                    <span class="font-medium">Hóspedes</span>
-                </a>
-
-                <a
-                    href="#"
-                    class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:bg-base-200 hover:text-gray-700 rounded-xl transition-all"
-                >
-                    <i data-lucide="bed-double" class="w-5 h-5"></i>
-                    <span class="font-medium">Quartos</span>
-                </a>
-
-                <div class="divider my-4"></div>
-
-                <a
-                    href="#"
-                    class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:bg-base-200 hover:text-gray-700 rounded-xl transition-all"
-                >
-                    <i data-lucide="wallet" class="w-5 h-5"></i>
-                    <span class="font-medium">Financeiro</span>
-                </a>
-
-
-                <div
-                    hx-get="{% url 'cashier_status' %}"
-                    hx-trigger="load, updateCashierStatus from:body"
-                    class="flex items-center gap-2 mr-4"
-                ></div>
-            </nav>
-
-            <div class="p-4 border-t border-base-200">
+            <div class="p-4 border-t border-base-200 bg-base-50">
                 <div class="flex items-center gap-3">
                     <div class="avatar placeholder">
-                        <div
-                            class="bg-neutral text-neutral-content rounded-full w-10"
-                        >
-                            <span class="text-xs">JL</span>
+                        <div class="bg-neutral text-neutral-content rounded-full w-10">
+                            <span class="text-sm font-bold">{{ request.user.email|slice:":2"|upper }}</span>
                         </div>
                     </div>
-                    <div>
-                        <p class="text-sm font-bold text-gray-700">
-                            {{ user.first_name|default:"Admin" }}
-                        </p>
-                        <p class="text-xs text-gray-400">Gerente</p>
+                    <div class="overflow-hidden">
+                        <p class="font-bold text-sm truncate">{{ request.user.get_full_name|default:request.user.email }}</p>
+                        <p class="text-xs text-gray-500 truncate">{{ request.user.get_role_display }}</p>
                     </div>
+                    <a href="/admin/logout/" class="btn btn-ghost btn-circle btn-xs ml-auto text-error">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                    </a>
                 </div>
             </div>
         </aside>
 
-        <main class="flex-1 flex flex-col relative overflow-hidden">
-            <header
-                class="h-16 bg-base-100 shadow-sm flex items-center justify-between px-6 lg:hidden"
-            >
-                <button class="btn btn-ghost btn-circle">
-                    <i data-lucide="menu"></i>
-                </button>
-                <span class="font-bold">Hotel Lux</span>
+        <main class="flex-1 md:ml-64 flex flex-col h-screen overflow-hidden bg-gray-50/50">
+            <header class="bg-base-100 h-16 border-b border-base-200 flex items-center justify-between px-6 sticky top-0 z-10">
+                <div class="md:hidden flex items-center gap-2">
+                    <label for="my-drawer-2" class="btn btn-ghost btn-circle">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </label>
+                    <span class="font-bold text-lg text-primary">HotelOS</span>
+                </div>
+
+                <div class="hidden md:block"></div>
+
+                <div
+                    hx-get="{% url 'cashier_status' %}"
+                    hx-trigger="load, updateCashierStatus from:body"
+                    class="flex items-center">
+                    </div>
             </header>
 
-            <div class="flex-1 overflow-y-auto p-6 lg:p-10">
-                {% block content %} {% endblock %}
+            <div class="flex-1 overflow-y-auto p-6 lg:p-8 scroll-smooth">
+                {% block content %}
+                {% endblock %}
             </div>
         </main>
 
-        <script>
-            lucide.createIcons();
-        </script>
-
+        <div id="booking-modal-container" class="relative z-50"></div>
 
         {% if messages %}
-        <div class="toast toast-top toast-center z-[100]">
+        <div class="toast toast-top toast-center z-[100] w-full max-w-md p-4 pointer-events-none">
             {% for message in messages %}
-            <div class="alert {% if message.tags == 'error' %}alert-error{% elif message.tags == 'warning' %}alert-warning{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %} shadow-lg animate-fade-in">
-                <span>{{ message }}</span>
+            <div class="alert {% if message.tags == 'error' %}alert-error{% elif message.tags == 'warning' %}alert-warning{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %} shadow-xl animate-fade-in flex items-start gap-3 pointer-events-auto">
+                <i data-lucide="{% if message.tags == 'error' %}alert-circle{% elif message.tags == 'success' %}check-circle{% else %}info{% endif %}" class="w-6 h-6 shrink-0"></i>
+                <span class="font-medium text-sm">{{ message }}</span>
             </div>
             {% endfor %}
         </div>
         <script>
+            // Remove toasts automaticamente após 4 segundos
             setTimeout(function(){
-                document.querySelectorAll('.toast').forEach(el => el.remove());
+                document.querySelectorAll('.toast .alert').forEach(el => {
+                    el.style.opacity = '0';
+                    setTimeout(() => el.remove(), 300); // Aguarda fade out
+                });
             }, 4000);
         </script>
         {% endif %}
 
         <script>
-            // Gerencia o fechamento de modais via comando do servidor (HTMX)
+            // 1. Inicializa ícones Lucide
+            lucide.createIcons();
+
+            // 2. Ouve o evento 'closeModal' vindo do servidor para fechar modais
             document.body.addEventListener('closeModal', function() {
-                const modal = document.getElementById('modal-backdrop');
-                if (modal) modal.remove();
+                const container = document.getElementById('booking-modal-container');
+                if (container) container.innerHTML = ''; // Limpa o conteúdo
+
+                // Remove backdrops antigos se existirem
+                const backdrop = document.getElementById('modal-backdrop');
+                if (backdrop) backdrop.remove();
             });
 
-            // Reinicia ícones sempre que o HTMX trocar conteúdo
+            // 3. Reinicia ícones sempre que o HTMX trocar conteúdo (navegação SPA)
             document.body.addEventListener('htmx:afterSwap', function(evt) {
                 lucide.createIcons();
+            });
+
+            // 4. Trata erros de conexão HTMX (ex: servidor offline)
+            document.body.addEventListener('htmx:responseError', function(evt) {
+                alert("Ocorreu um erro de comunicação com o servidor.");
             });
         </script>
     </body>

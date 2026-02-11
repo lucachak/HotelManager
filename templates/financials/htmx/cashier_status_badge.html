@@ -1,25 +1,28 @@
 {% if session %}
+    <div class="hidden md:flex flex-col text-right mr-3">
+        <span class="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Caixa Aberto</span>
+        <span class="text-xs font-mono font-bold text-emerald-600">{{ session.created_at|date:"H:i" }}</span>
+    </div>
+
     <button
         hx-get="{% url 'close_register_modal' %}"
         hx-target="#booking-modal-container"
         hx-swap="innerHTML"
-        class="btn btn-sm btn-outline btn-error gap-2">
+        class="btn btn-sm btn-error btn-outline gap-2 shadow-sm hover:shadow-md transition-all">
         <i data-lucide="lock" class="w-4 h-4"></i>
-        Fechar Caixa
+        <span class="hidden sm:inline">Fechar</span>
     </button>
-    <div class="hidden md:flex flex-col text-right mr-2">
-        <span class="text-xs text-gray-500">Caixa Aberto</span>
-        <span class="text-xs font-bold font-mono">{{ session.created_at|date:"H:i" }}</span>
-    </div>
 {% else %}
     <button
         hx-get="{% url 'open_register_modal' %}"
         hx-target="#booking-modal-container"
         hx-swap="innerHTML"
-        class="btn btn-sm btn-primary gap-2 animate-pulse">
+        class="btn btn-sm btn-primary gap-2 shadow-lg shadow-primary/30 animate-pulse hover:animate-none">
         <i data-lucide="key" class="w-4 h-4"></i>
-        Abrir Caixa
+        <span class="hidden sm:inline">Abrir Caixa</span>
     </button>
 {% endif %}
 
-<script>lucide.createIcons();</script>
+<script>
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+</script>
