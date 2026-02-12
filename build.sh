@@ -11,22 +11,21 @@ python manage.py collectstatic --no-input
 # 3. Aplica as migrações do banco de dados
 python manage.py migrate
 
-# 4. Cria o Superusuário automaticamente (se não existir)
-# Usamos o shell do Django para evitar erros de duplicidade
 python manage.py shell <<EOF
 from django.contrib.auth import get_user_model
 User = get_user_model()
 email = 'admin@hotel.com'
-username = 'admin'
 password = 'admin'
 
 if not User.objects.filter(email=email).exists():
-    # Se o seu modelo de usuário usar e-mail como login:
-    # User.objects.create_superuser(email=email, password=password)
-    
-    # Se o seu modelo for o padrão (Username + Email):
-    User.objects.create_superuser(username, email, password)
-    print(">>> Superusuário criado com sucesso! (admin@hotel.com / admin)")
+    try:
+        # Tenta criar usando apenas e-mail e senha (comum em CustomUser)
+        User.objects.create_superuser(email=email, password=password)
+        print(">>> Superusuário criado com e-mail: admin@hotel.com")
+    except TypeError:
+        # Se der erro de argumento, tenta o padrão (Username + Email + Password)
+        User.objects.create_superuser(username='admin', email=email, password=password)
+        print(">>> Superusuário criado com username: admin")
 else:
-    print(">>> Superusuário já existe. Pulando criação.")
+    print(">>> Superusuário já existe. Pulando.")
 EOF
