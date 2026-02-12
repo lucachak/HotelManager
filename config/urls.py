@@ -1,43 +1,41 @@
-"""
-URL configuration for config project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+# --- CONFIGURAÇÃO DE IDENTIDADE DO ADMIN ---
+# Isso altera os textos padrão do Django Admin para o nome do seu hotel
+admin.site.site_header = "Hotel Lux | Gestão Administrativa"
+admin.site.site_title = "Hotel Lux"
+admin.site.index_title = "Painel de Controle Técnico"
+
+# O link "Ver Site" no topo do Admin agora levará direto para o seu Dashboard Staff
+admin.site.site_url = '/'
+
 urlpatterns = [
-    # O Admin do Django
+    # Admin do Django
     path('admin/', admin.site.urls),
 
-    # Futuras rotas da sua API (quando criarmos)
-    # path('api/', include('apps.api.urls')),
-
-    # Rotas do App Core (se tiver views futuramente)
+    # Concentramos todas as rotas de negócio dentro do apps.core.urls
+    # (Reservas, Financeiro, Hóspedes, etc, já estão inclusos lá)
     path('', include('apps.core.urls')),
+
+    # Rota para autenticação padrão do Django (opcional, caso use login/logout padrão)
+    # path('accounts/', include('django.contrib.auth.urls')),
+
 ]
 
+# --- CONFIGURAÇÕES DE DESENVOLVIMENTO (DEBUG) ---
 if settings.DEBUG:
-    import debug_toolbar
+    # 1. Suporte ao Django Debug Toolbar
+    try:
+        import debug_toolbar
+        urlpatterns += [
+            path('__debug__/', include(debug_toolbar.urls)),
+        ]
+    except ImportError:
+        pass
 
-    # Adiciona a rota __debug__/
-    urlpatterns += [
-        path('__debug__/', include(debug_toolbar.urls)),
-    ]
-
-    # Adiciona suporte para servir arquivos de Media (uploads) em Dev
+    # 2. Servir arquivos de Mídia (Uploads) e Estáticos em ambiente local
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

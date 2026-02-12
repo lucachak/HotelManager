@@ -3,6 +3,11 @@ import dj_database_url
 from pathlib import Path
 from decouple import config, Csv
 
+from django.templatetags.static import static
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
+
+
 # --- CAMINHOS ---
 # Como estamos em config/settings/base.py, precisamos subir 3 níveis para chegar à raiz
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -17,6 +22,12 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost', cast=Csv(
 
 # --- APLICAÇÕES INSTALADAS ---
 DJANGO_APPS = [
+    'unfold',
+    'unfold.contrib.filters',
+    'unfold.contrib.forms',
+    'unfold.contrib.import_export',
+
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -115,3 +126,152 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Configuração Padrão de Chave Primária
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+LOGOUT_REDIRECT_URL = '/admin/login/'
+LOGIN_URL = '/admin/login/'
+
+
+
+UNFOLD = {
+    "SITE_TITLE": "Hotel Lux",
+    "SITE_HEADER": "Hotel Lux | Gestão",
+    "SITE_URL": "/",
+    "SITE_SYMBOL": "hotel",  # Ícone do Google Material Icons
+
+    "SHOW_HISTORY": True,
+    "SHOW_VIEW_ON_SITE": True,
+
+    "ENVIRONMENT": "config.settings.base.environment_callback",
+
+    "COLORS": {
+        "primary": {
+            "50": "250 245 255",
+            "100": "243 232 255",
+            "200": "233 213 255",
+            "300": "216 180 254",
+            "400": "192 132 252",
+            "500": "168 85 247",
+            "600": "147 51 234",
+            "700": "126 34 206",
+            "800": "107 33 168",
+            "900": "88 28 135",
+            "950": "59 7 100",
+        },
+    },
+
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": False,
+        "navigation": [
+            {
+                "title": _("Dashboard"),
+                "separator": False,
+                "items": [
+                    {
+                        "title": _("Visão Geral"),
+                        "icon": "dashboard",
+                        "link": reverse_lazy("admin:index"),
+                    },
+                    {
+                        "title": _("Ver Site"),
+                        "icon": "open_in_new",
+                        "link": "/",
+                    },
+                ],
+            },
+            {
+                "title": _("Reservas"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Todas as Reservas"),
+                        "icon": "event",
+                        "link": reverse_lazy("admin:bookings_booking_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Hóspedes"),
+                "separator": True,
+                "items": [
+                    {
+                        "title": _("Cadastro de Hóspedes"),
+                        "icon": "people",
+                        "link": reverse_lazy("admin:guests_guest_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Acomodações"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Quartos"),
+                        "icon": "hotel",
+                        "link": reverse_lazy("admin:accommodations_room_changelist"),
+                    },
+                    {
+                        "title": _("Categorias"),
+                        "icon": "category",
+                        "link": reverse_lazy("admin:accommodations_roomcategory_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Financeiro"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Caixas"),
+                        "icon": "account_balance_wallet",
+                        "link": reverse_lazy("admin:financials_cashregistersession_changelist"),
+                    },
+                    {
+                        "title": _("Transações"),
+                        "icon": "receipt_long",
+                        "link": reverse_lazy("admin:financials_transaction_changelist"),
+                    },
+                    {
+                        "title": _("Produtos/Serviços"),
+                        "icon": "shopping_bag",
+                        "link": reverse_lazy("admin:financials_product_changelist"),
+                    },
+                    {
+                        "title": _("Métodos de Pagamento"),
+                        "icon": "payment",
+                        "link": reverse_lazy("admin:financials_paymentmethod_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Sistema"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Usuários"),
+                        "icon": "person",
+                        "link": reverse_lazy("admin:core_user_changelist"),
+                    },
+                    {
+                        "title": _("Grupos"),
+                        "icon": "group",
+                        "link": reverse_lazy("admin:auth_group_changelist"),
+                    },
+                ],
+            },
+        ],
+    },
+}
+
+
+def environment_callback(request):
+    """
+    Mostra um badge de ambiente (Dev/Prod) no admin
+    """
+    if DEBUG:
+        return ["Desenvolvimento", "danger"]
+    return ["Produção", "success"]

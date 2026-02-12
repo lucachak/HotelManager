@@ -12,6 +12,8 @@
         <script src="https://unpkg.com/lucide@latest"></script>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
+        <link rel="icon" type="image/png" href="https://img.icons8.com/color/96/5-star-hotel.png">
+
         <style>
             body { font-family: "Inter", sans-serif; }
             .animate-fade-in { animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -153,9 +155,12 @@
                                 <p class="font-bold text-sm truncate text-gray-700">{{ request.user.get_full_name|default:"Usuário" }}</p>
                                 <p class="text-xs text-gray-500 truncate">{{ request.user.email }}</p>
                             </div>
-                            <a href="/admin/logout/" class="btn btn-ghost btn-circle btn-xs text-error hover:bg-error/10 tooltip tooltip-left" data-tip="Sair">
-                                <i data-lucide="log-out" class="w-4 h-4"></i>
-                            </a>
+                            <form action="{% url 'logout_to_login' %}" method="post" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-ghost btn-circle btn-xs text-error hover:bg-error/10 tooltip tooltip-left border-0" data-tip="Sair">
+                                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </aside>
@@ -216,5 +221,14 @@
                 dismissToasts();
             });
         </script>
+        <script>
+            function closeModal() {
+                const container = document.getElementById('booking-modal-container');
+                if (container) {
+                    container.innerHTML = '';
+                }
+            }
+        </script>
+
     </body>
 </html>

@@ -1,79 +1,119 @@
-<div id="modal-content-card" class="bg-base-100 rounded-2xl shadow-2xl w-full max-w-lg relative z-10 overflow-hidden flex flex-col max-h-[90vh] animate-fade-in">
+<!-- Backdrop com fade -->
+<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in"
+     onclick="if(event.target === this) document.getElementById('booking-modal-container').innerHTML = ''">
 
-    <div class="bg-primary p-4 text-white flex justify-between items-center">
-        <h3 class="font-bold text-lg flex items-center gap-2">
-            <i data-lucide="calendar-plus" class="w-5 h-5"></i> Nova Reserva
-        </h3>
-        <button onclick="document.getElementById('booking-modal-container').innerHTML = ''" class="btn btn-ghost btn-circle btn-sm text-white hover:bg-white/20">✕</button>
+    <div id="modal-content-card"
+         class="bg-base-100 rounded-2xl shadow-2xl w-full max-w-lg relative z-10 overflow-hidden flex flex-col max-h-[90vh] animate-scale-in"
+         onclick="event.stopPropagation()">
+
+        <div class="bg-primary p-4 text-white flex justify-between items-center">
+            <h3 class="font-bold text-lg flex items-center gap-2">
+                <i data-lucide="calendar-plus" class="w-5 h-5"></i> Nova Reserva
+            </h3>
+            <button onclick="document.getElementById('booking-modal-container').innerHTML = ''"
+                    class="btn btn-ghost btn-circle btn-sm text-white hover:bg-white/20">✕</button>
+        </div>
+
+        <form hx-post="{% url 'create_booking_htmx' %}{% if room %}?room={{ room.id }}{% endif %}"
+              hx-target="#modal-content-card"
+              hx-swap="outerHTML"
+              class="flex flex-col flex-1 overflow-hidden">
+            {% csrf_token %}
+
+            <div class="p-6 space-y-4 overflow-y-auto flex-1">
+                {% if room %}
+                    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                        <div class="badge badge-lg bg-emerald-100 text-emerald-600 font-bold border-none">
+                            {{ room.number }}
+                        </div>
+                        <div>
+                            <p class="font-bold text-gray-800">{{ room.category.name }}</p>
+                            <p class="text-xs text-gray-500">R$ {{ room.category.base_price }} / noite</p>
+                        </div>
+                    </div>
+                    <div class="hidden">
+                        {{ form.room }}
+                    </div>
+                {% else %}
+                    <div class="form-control">
+                        <label class="label font-bold text-gray-600">Escolha o Quarto</label>
+                        {{ form.room }}
+                        {% if form.room.errors %}
+                            <span class="text-error text-xs mt-1">{{ form.room.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                {% if error %}
+                <div class="alert alert-error text-white text-sm shadow-md">
+                    <i data-lucide="alert-circle" class="w-5 h-5"></i>
+                    <span>{{ error }}</span>
+                </div>
+                {% endif %}
+
+                <div class="form-control">
+                    <label class="label font-bold text-gray-600">Hóspede</label>
+                    {{ form.guest }}
+                    <label class="label">
+                        <span class="label-text-alt text-gray-400">Não achou? Cadastre em Hóspedes primeiro.</span>
+                    </label>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label font-bold text-gray-600">Check-in</label>
+                        {{ form.start_date }}
+                    </div>
+                    <div class="form-control">
+                        <label class="label font-bold text-gray-600">Check-out</label>
+                        {{ form.end_date }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 bg-gray-50 border-t flex justify-end gap-2">
+                <button type="button"
+                        onclick="document.getElementById('booking-modal-container').innerHTML = ''"
+                        class="btn btn-ghost">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn btn-primary shadow-lg shadow-primary/30 text-white">
+                    <i data-lucide="check" class="w-4 h-4"></i> Confirmar Reserva
+                </button>
+            </div>
+        </form>
     </div>
-
-    <form hx-post="{% url 'create_booking_htmx' %}{% if room %}?room={{ room.id }}{% endif %}"
-          hx-target="#modal-content-card"
-          hx-swap="outerHTML"
-          class="flex flex-col flex-1 overflow-hidden">
-
-        <div class="p-6 space-y-4 overflow-y-auto flex-1">
-
-            {% if room %}
-                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                    <div class="badge badge-lg bg-emerald-100 text-emerald-600 font-bold border-none">
-                        {{ room.number }}
-                    </div>
-                    <div>
-                        <p class="font-bold text-gray-800">{{ room.category.name }}</p>
-                        <p class="text-xs text-gray-500">R$ {{ room.category.base_price }} / noite</p>
-                    </div>
-                </div>
-                <div class="hidden">
-                    {{ form.room }}
-                </div>
-            {% else %}
-                <div class="form-control">
-                    <label class="label font-bold text-gray-600">Escolha o Quarto</label>
-                    {{ form.room }}
-                    {% if form.room.errors %}
-                        <span class="text-error text-xs mt-1">{{ form.room.errors.0 }}</span>
-                    {% endif %}
-                </div>
-            {% endif %}
-
-            {% if error %}
-            <div class="alert alert-error text-white text-sm shadow-md">
-                <i data-lucide="alert-circle" class="w-5 h-5"></i>
-                <span>{{ error }}</span>
-            </div>
-            {% endif %}
-
-            <div class="form-control">
-                <label class="label font-bold text-gray-600">Hóspede</label>
-                {{ form.guest }}
-                <label class="label">
-                    <span class="label-text-alt text-gray-400">Não achou? Cadastre em Hóspedes primeiro.</span>
-                </label>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div class="form-control">
-                    <label class="label font-bold text-gray-600">Check-in</label>
-                    {{ form.start_date }}
-                </div>
-                <div class="form-control">
-                    <label class="label font-bold text-gray-600">Check-out</label>
-                    {{ form.end_date }}
-                </div>
-            </div>
-
-        </div>
-
-        <div class="p-4 bg-gray-50 border-t flex justify-end gap-2">
-            <button type="button" onclick="document.getElementById('booking-modal-container').innerHTML = ''" class="btn btn-ghost">
-                Cancelar
-            </button>
-
-            <button type="submit" class="btn btn-primary shadow-lg shadow-primary/30 text-white">
-                <i data-lucide="check" class="w-4 h-4"></i> Confirmar Reserva
-            </button>
-        </div>
-    </form>
 </div>
-<script>if (typeof lucide !== 'undefined') lucide.createIcons();</script>
+
+<script>
+    // Re-inicializa os ícones do Lucide após carregar o modal
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+</script>
+
+<style>
+    @keyframes fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes scale-in {
+        from {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .animate-fade-in {
+        animation: fade-in 0.2s ease-out;
+    }
+
+    .animate-scale-in {
+        animation: scale-in 0.2s ease-out;
+    }
+</style>

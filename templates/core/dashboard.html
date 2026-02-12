@@ -13,13 +13,23 @@
             </p>
         </div>
 
-        <button
-            hx-get="{% url 'create_booking_htmx' %}"
-            hx-target="#booking-modal-container"
-            hx-swap="innerHTML"
-            class="btn btn-primary btn-sm gap-2 rounded-full shadow-lg shadow-primary/30 text-white">
-            <i data-lucide="plus"></i> Nova Reserva
-        </button>
+        <div class="flex items-center gap-3">
+            <form action="{% url 'logout_to_login' %}" method="post" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-ghost btn-sm text-gray-400 hover:text-error gap-2 transition-colors">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                    <span>Sair</span>
+                </button>
+            </form>
+
+            <button
+                hx-get="{% url 'create_booking_htmx' %}"
+                hx-target="#booking-modal-container"
+                hx-swap="innerHTML"
+                class="btn btn-primary btn-sm gap-2 rounded-full shadow-lg shadow-primary/30 text-white">
+                <i data-lucide="plus" class="w-4 h-4"></i> Nova Reserva
+            </button>
+        </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -98,7 +108,6 @@
         <div class="card-body p-6">
             <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
                 {% for room in rooms %}
-
                 <div class="relative group cursor-pointer"
                      hx-get="{% url 'room_details_modal' room.id %}"
                      hx-target="#booking-modal-container"
@@ -116,7 +125,6 @@
                         {% endif %}">
 
                         <span class="text-2xl font-bold">{{ room.number }}</span>
-
                         <span class="text-[10px] uppercase font-bold tracking-wider mt-1">
                             {{ room.get_status_display }}
                         </span>
@@ -134,7 +142,6 @@
                         {% endif %}
                     </div>
                 </div>
-
                 {% empty %}
                 <p class="col-span-full text-center text-gray-400 py-10"> Nenhum quarto cadastrado. </p>
                 {% endfor %}
@@ -142,9 +149,9 @@
         </div>
     </div>
 </div>
+<div id="booking-modal-container"></div>
 
 <script>
-    // Se a página receber este evento via HTMX, ela recarrega
     document.body.addEventListener('bookingSaved', function(){
         window.location.reload();
     })

@@ -1,9 +1,20 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Q
 from django.utils import timezone
 from apps.accommodations.models import Room
-from apps.bookings.models import Booking, RoomAllocation
+from apps.bookings.models import RoomAllocation
+from django.contrib.auth import logout
+from django.shortcuts import redirect
+from django.contrib import messages
+
+
+def logout_and_redirect_login(request):
+    if request.method == 'POST':
+        logout(request)
+        messages.success(request, 'Você saiu com sucesso.')
+        return redirect('admin:login')
+    # Se não for POST, redireciona pro dashboard
+    return redirect('dashboard')
 
 @login_required
 def dashboard(request):

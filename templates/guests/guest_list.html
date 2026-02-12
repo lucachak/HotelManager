@@ -1,13 +1,10 @@
 {% extends 'base.html' %}
-
 {% block title %}Hóspedes | Hotel Lux{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto space-y-6">
-
     <div class="flex justify-between items-center">
         <h2 class="text-3xl font-bold text-gray-800">Hóspedes</h2>
-
         <button
             hx-get="{% url 'guest_create' %}"
             hx-target="#booking-modal-container"
@@ -48,4 +45,11 @@
         </table>
     </div>
 </div>
+
+<script>
+    // Escuta o evento de hóspede salvo e recarrega a página
+    document.body.addEventListener('guestSaved', function(){
+        window.location.reload();
+    });
+</script>
 {% endblock %}
