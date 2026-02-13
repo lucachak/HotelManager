@@ -57,8 +57,8 @@
                     <i data-lucide="pie-chart" class="w-8 h-8"></i>
                 </div>
                 <div class="stat-title text-blue-600 font-bold uppercase text-xs">Ticket Médio</div>
-                <div class="stat-value text-2xl">R$ 0,00</div>
-                <div class="stat-desc text-blue-500">Por hóspede</div>
+                <div class="stat-value text-2xl">--</div>
+                <div class="stat-desc text-blue-500">Em desenvolvimento</div>
             </div>
         </div>
     </div>
@@ -81,21 +81,31 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
+    // Usamos uma IIFE (Immediately Invoked Function Expression)
+    // Isso garante que o código rode assim que o HTMX inserir este script no DOM,
+    // sem depender do evento DOMContentLoaded que já passou.
+    (function() {
         const ctx = document.getElementById('revenueChart');
+        if (!ctx) return;
 
-        // Recebe os dados do Django (Vem como JSON String, o 'safe' remove as aspas de proteção)
+        // Limpeza: Se já existir um gráfico global nessa janela, destrua-o antes de criar o novo
+        // Isso evita erros de "Canvas is already in use" ao navegar rápido
+        if (window.myRevenueChart instanceof Chart) {
+            window.myRevenueChart.destroy();
+        }
+
         const labels = {{ chart_dates|safe }};
         const data = {{ chart_values|safe }};
 
-        new Chart(ctx, {
+        // Atribuímos à janela (window) para poder referenciar e destruir depois se necessário
+        window.myRevenueChart = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: labels,
                 datasets: [{
                     label: 'Faturamento (R$)',
                     data: data,
-                    backgroundColor: 'rgba(16, 185, 129, 0.2)', // Emerald
+                    backgroundColor: 'rgba(16, 185, 129, 0.2)',
                     borderColor: 'rgba(16, 185, 129, 1)',
                     borderWidth: 2,
                     borderRadius: 4,
@@ -112,9 +122,7 @@
                         callbacks: {
                             label: function(context) {
                                 let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
+                                if (label) label += ': ';
                                 if (context.parsed.y !== null) {
                                     label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.y);
                                 }
@@ -139,6 +147,6 @@
                 }
             }
         });
-    });
+    })();
 </script>
 {% endblock %}

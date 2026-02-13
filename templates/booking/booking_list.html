@@ -109,6 +109,21 @@
                 {% endfor %}
             </tbody>
         </table>
+        
+        {% if allocations.has_other_pages %}
+        <div class="p-4 border-t border-gray-100 flex justify-center">
+            <div class="join">
+                {% if allocations.has_previous %}
+                    <a href="?page={{ allocations.previous_page_number }}&filter={{ filter_type }}" class="join-item btn btn-sm">«</a>
+                {% endif %}
+                <button class="join-item btn btn-sm btn-disabled">Página {{ allocations.number }}</button>
+                {% if allocations.has_next %}
+                    <a href="?page={{ allocations.next_page_number }}&filter={{ filter_type }}" class="join-item btn btn-sm">»</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
+}

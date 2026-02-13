@@ -1,23 +1,26 @@
 import json
-from decimal import Decimal
 from datetime import datetime
-from django.db.models import Sum
-from django.utils import timezone
+from decimal import Decimal
+
 from django.contrib import messages
-from django.http import HttpResponse
-from django.db.models.functions import TruncDate
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.serializers.json import DjangoJSONEncoder
-from django.contrib.auth.decorators import login_required
+from django.db.models import Sum
+from django.db.models.functions import TruncDate
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_http_methods
-from django.shortcuts import render, get_object_or_404, redirect
 
-
-from apps.bookings.models import Booking
-from apps.financials.models import Transaction, CashRegisterSession, PaymentMethod, Product
-from apps.financials.services import CashierService
-from apps.financials.forms import ReceivePaymentForm, ConsumptionForm, RestockForm, ProductForm
 from apps.accommodations.views import room_details_modal
+# Imports locais
+from apps.bookings.models import Booking
+from apps.financials.forms import (ConsumptionForm, ProductForm,
+                                   ReceivePaymentForm, RestockForm)
+from apps.financials.models import (CashRegisterSession, PaymentMethod,
+                                    Product, Transaction)
+from apps.financials.services import CashierService
 
 # --- Views de Caixa ---
 
@@ -162,60 +165,65 @@ def financial_dashboard(request):
         messages.error(request, "Acesso negado.")
         return redirect('booking_list')
 
-    # 1. Identifica o Filtro Selecionado (Padrão: 30 dias)
+    # 1. Configuração do Período
     period = request.GET.get('period', '30days')
     today = timezone.now().date()
+    # Usamos datetime combinada com min.time para garantir comparação correta (00:00:00)
+    now = timezone.now()
 
-    # Define a Data de Início baseada no filtro
     if period == 'month':
-        # Começo deste mês (dia 1)
-        start_date = today.replace(day=1)
+        start_date = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         label_chart = "Receita deste Mês"
     elif period == 'year':
-        # Começo deste ano (1 de Jan)
-        start_date = today.replace(month=1, day=1)
+        start_date = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
         label_chart = "Receita deste Ano"
     else:
-        # Últimos 30 dias (Padrão)
-        start_date = today - timezone.timedelta(days=30)
+        # Default: 30 dias atrás
+        start_date = now - timezone.timedelta(days=30)
         label_chart = "Últimos 30 Dias"
 
-    # 2. Dados Gerais (KPIs) - Estes continuam sendo o TOTAL GERAL ACUMULADO?
-    # Geralmente KPIs mostram o total do período filtrado ou total geral.
-    # Vamos filtrar os KPIs também para bater com o gráfico!
-
+    # 2. KPIs (Totais do Período)
+    # Usamos Transaction.Type.INCOME para garantir consistência com o Model
     kpi_income = Transaction.objects.filter(
-        transaction_type='INCOME',
-        created_at__date__gte=start_date
-    ).aggregate(Sum('amount'))['amount__sum'] or 0
+        transaction_type=Transaction.Type.INCOME,
+        created_at__gte=start_date
+    ).aggregate(total=Sum('amount'))['total'] or 0
 
     kpi_consumption = Transaction.objects.filter(
-        transaction_type='CONSUMPTION',
-        created_at__date__gte=start_date
-    ).aggregate(Sum('amount'))['amount__sum'] or 0
+        transaction_type=Transaction.Type.CONSUMPTION,
+        created_at__gte=start_date
+    ).aggregate(total=Sum('amount'))['total'] or 0
 
-    # 3. Dados para o Gráfico
+    # 3. Dados para o Gráfico (Agrupado por Dia)
     daily_revenue = Transaction.objects.filter(
-        created_at__date__gte=start_date,
-        transaction_type='INCOME'
-    ).annotate(date=TruncDate('created_at')).values('date').annotate(total=Sum('amount')).order_by('date')
+        created_at__gte=start_date,
+        transaction_type=Transaction.Type.INCOME
+    ).annotate(
+        date=TruncDate('created_at')
+    ).values('date').annotate(
+        total=Sum('amount')
+    ).order_by('date')
 
-    # Processamento Seguro dos Dados
+    # Processamento para JSON (JavaScript não entende Decimal ou Date python)
     dates = []
     values = []
 
     for entry in daily_revenue:
         d = entry['date']
-        if isinstance(d, str): # Fix SQLite
+        val = entry['total'] or 0
+        
+        # Correção para SQLite (que às vezes retorna string) vs Postgres (date object)
+        if isinstance(d, str):
             try:
                 d = datetime.strptime(d, '%Y-%m-%d').date()
             except ValueError:
                 pass
-
+        
         if d:
             dates.append(d.strftime('%d/%m'))
-            values.append(float(entry['total']))
+            values.append(float(val)) # Converte Decimal para Float
 
+    # Fallback para gráfico não ficar vazio feio
     if not dates:
         dates = ["Sem dados"]
         values = [0]
@@ -223,21 +231,17 @@ def financial_dashboard(request):
     context = {
         'total_income': kpi_income,
         'total_consumption': kpi_consumption,
+        # json.dumps garante que listas virem strings JSON válidas ("['a', 'b']")
         'chart_dates': json.dumps(dates),
         'chart_values': json.dumps(values),
-        'period': period,       # Para marcar o botão ativo
+        'period': period,
         'label_chart': label_chart
     }
     return render(request, 'financials/reports/dashboard.html', context)
 
 @login_required
 def print_receipt_pdf(request, booking_id):
-    """
-    Gera o Recibo de Pagamento (Comprovante de Estadia).
-    """
     booking = get_object_or_404(Booking, pk=booking_id)
-
-    # Busca transações para detalhar
     consumptions = booking.payments.filter(transaction_type=Transaction.Type.CONSUMPTION)
     payments = booking.payments.filter(transaction_type=Transaction.Type.INCOME)
 
@@ -249,58 +253,37 @@ def print_receipt_pdf(request, booking_id):
     }
     return render(request, 'financials/print/receipt.html', context)
 
-
-
 @login_required
 def stock_dashboard(request):
-    """
-    Lista produtos e permite reposição.
-    """
     if not request.user.is_manager_or_admin:
         raise PermissionDenied()
-
-    # Ordena produtos com menos estoque primeiro
     products = Product.objects.all().order_by('stock', 'name')
-
     context = {'products': products}
     return render(request, 'financials/stock/dashboard.html', context)
 
 @login_required
 def restock_product_modal(request, product_id):
     product = get_object_or_404(Product, pk=product_id)
-
     if request.method == "POST":
         form = RestockForm(request.POST)
         if form.is_valid():
             try:
                 qty = form.cleaned_data['quantity']
                 cost = form.cleaned_data['cost_price']
-
                 CashierService.register_restock(product, qty, cost, request.user)
                 messages.success(request, f"Estoque de {product.name} atualizado (+{qty})!")
-
-                # Fecha modal e recarrega a página
                 return HttpResponse(status=204, headers={'HX-Refresh': 'true'})
             except Exception as e:
                 messages.error(request, str(e))
     else:
         form = RestockForm()
-
-    return render(request, 'financials/stock/restock_modal.html', {
-        'form': form, 'product': product
-    })
-
+    return render(request, 'financials/stock/restock_modal.html', {'form': form, 'product': product})
 
 @login_required
 def product_edit_htmx(request, product_id):
-    """
-    Modal para editar preço e nome do produto.
-    """
     if not request.user.is_manager_or_admin:
         raise PermissionDenied()
-
     product = get_object_or_404(Product, pk=product_id)
-
     if request.method == "POST":
         form = ProductForm(request.POST, instance=product)
         if form.is_valid():
@@ -309,7 +292,4 @@ def product_edit_htmx(request, product_id):
             return HttpResponse(status=204, headers={'HX-Refresh': 'true'})
     else:
         form = ProductForm(instance=product)
-
-    return render(request, 'financials/stock/product_edit_modal.html', {
-        'form': form, 'product': product
-    })
+    return render(request, 'financials/stock/product_edit_modal.html', {'form': form, 'product': product})
