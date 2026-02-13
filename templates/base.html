@@ -12,44 +12,20 @@
 
         <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
         <script src="https://cdn.tailwindcss.com"></script>
-        
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
         <link rel="icon" type="image/png" href="https://img.icons8.com/color/96/5-star-hotel.png">
 
         <style>
             body { font-family: "Inter", sans-serif; }
-            
-            /* Animações Suaves */
             .animate-fade-in { animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
             @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-            /* Scrollbar Personalizada */
             ::-webkit-scrollbar { width: 8px; height: 8px; }
             ::-webkit-scrollbar-track { background: transparent; }
             ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
             ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-            /* Barra de Progresso do HTMX (Estilo SPA) */
-            .htmx-progress-bar {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                height: 3px;
-                background: #4f46e5; /* Cor Primary */
-                width: 100%;
-                z-index: 9999;
-                transition: width 0.3s ease-out;
-            }
-            .htmx-request .htmx-progress-bar {
-                display: block;
-                animation: progress 2s infinite linear;
-            }
-            @keyframes progress {
-                0% { width: 0%; margin-left: 0; }
-                50% { width: 70%; margin-left: 0; }
-                100% { width: 100%; margin-left: 100%; }
-            }
+            .htmx-progress-bar { display: none; position: fixed; top: 0; left: 0; height: 3px; background: #4f46e5; width: 100%; z-index: 9999; transition: width 0.3s ease-out; }
+            .htmx-request .htmx-progress-bar { display: block; animation: progress 2s infinite linear; }
+            @keyframes progress { 0% { width: 0%; margin-left: 0; } 50% { width: 70%; margin-left: 0; } 100% { width: 100%; margin-left: 100%; } }
         </style>
     </head>
 
@@ -69,17 +45,11 @@
                             <i data-lucide="menu" class="w-6 h-6"></i>
                         </label>
                     </div>
-
                     <div class="flex-1 px-2 mx-2 lg:hidden">
-                        <span class="text-xl font-bold text-primary tracking-tight">Lucachak<span class="text-gray-800">Systems</span></span>
+                        <span class="text-xl font-bold text-primary tracking-tight">Hotel<span class="text-gray-800">OS</span></span>
                     </div>
-
                     <div class="flex-1 hidden lg:block"></div>
-
-                    <div class="flex-none"
-                         hx-get="{% url 'cashier_status' %}"
-                         hx-trigger="load, updateCashierStatus from:body">
-                    </div>
+                    <div class="flex-none" hx-get="{% url 'cashier_status' %}" hx-trigger="load, updateCashierStatus from:body"></div>
                 </header>
 
                 <main class="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth relative" id="main-content">
@@ -90,9 +60,7 @@
 
             <div class="drawer-side z-40">
                 <label for="main-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
-
                 <aside class="bg-base-100 min-h-full w-72 flex flex-col border-r border-base-200 shadow-xl lg:shadow-none">
-                    
                     <div class="p-6 text-center border-b border-base-200">
                         <div class="w-12 h-12 bg-primary text-white rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-primary/30">
                             <i data-lucide="building-2" class="w-6 h-6"></i>
@@ -112,13 +80,19 @@
                         <div class="divider my-1 text-xs text-gray-300 font-bold uppercase tracking-wider">Operação</div>
 
                         <li>
+                            <a href="{% url 'booking_calendar' %}" class="{% if 'bookings/calendar' in request.path %}active bg-primary text-white shadow-md shadow-primary/30{% endif %} flex gap-3 py-3">
+                                <i data-lucide="calendar" class="w-5 h-5"></i>
+                                Agenda
+                            </a>
+                        </li>
+                        <li>
                             <a href="{% url 'guest_list' %}" class="{% if 'guests' in request.path %}active bg-primary text-white shadow-md shadow-primary/30{% endif %} flex gap-3 py-3">
                                 <i data-lucide="users" class="w-5 h-5"></i>
                                 Hóspedes
                             </a>
                         </li>
                         <li>
-                            <a href="{% url 'booking_list' %}" class="{% if 'bookings' in request.path %}active bg-primary text-white shadow-md shadow-primary/30{% endif %} flex gap-3 py-3">
+                            <a href="{% url 'booking_list' %}" class="{% if 'bookings' in request.path and 'calendar' not in request.path %}active bg-primary text-white shadow-md shadow-primary/30{% endif %} flex gap-3 py-3">
                                 <i data-lucide="calendar-days" class="w-5 h-5"></i>
                                 Reservas
                             </a>
@@ -132,7 +106,6 @@
 
                         {% if request.user.is_staff  %}
                         <div class="divider my-1 text-xs text-gray-300 font-bold uppercase tracking-wider">Gestão</div>
-
                         <li>
                             <details {% if 'financials' in request.path %}open{% endif %}>
                                 <summary class="flex gap-3 py-3 hover:bg-base-200">
@@ -173,7 +146,6 @@
         </div>
 
         <div id="booking-modal-container" class="relative z-[60]"></div>
-        
         <div id="toast-container" class="toast toast-top toast-center z-[100] w-full max-w-md p-4 pointer-events-none flex flex-col gap-2">
             {% if messages %}
                 {% for message in messages %}
@@ -187,24 +159,16 @@
 
         <script src="https://unpkg.com/htmx.org@1.9.10"></script>
         <script src="https://unpkg.com/lucide@latest"></script>
-
         <script>
-            // Inicialização de ícones
             lucide.createIcons();
-
-            // Re-inicializa ícones após trocas do HTMX (Crucial para hx-boost e modais)
             document.body.addEventListener('htmx:afterSwap', function(evt) {
                 lucide.createIcons();
                 dismissToasts();
             });
-
-            // Fecha modais limpando o container
             document.body.addEventListener('closeModal', function() {
                 const container = document.getElementById('booking-modal-container');
                 if (container) container.innerHTML = '';
             });
-
-            // Gerenciamento de Toasts
             function dismissToasts() {
                 const toasts = document.querySelectorAll('#toast-container .alert');
                 toasts.forEach(toast => {
@@ -220,28 +184,6 @@
                 });
             }
             dismissToasts();
-
-            // Tratamento de erros de conexão
-            document.body.addEventListener('htmx:responseError', function(evt) {
-                const toastContainer = document.getElementById('toast-container');
-                const errorHTML = `
-                    <div class="alert alert-error text-white shadow-lg animate-fade-in pointer-events-auto rounded-xl">
-                        <i data-lucide="wifi-off" class="w-6 h-6"></i>
-                        <span>Erro de conexão. Verifique sua internet.</span>
-                    </div>
-                `;
-                toastContainer.insertAdjacentHTML('beforeend', errorHTML);
-                lucide.createIcons();
-                dismissToasts();
-            });
-        </script>
-        
-        <script>
-            function closeModal() {
-                const container = document.getElementById('booking-modal-container');
-                if (container) container.innerHTML = '';
-            }
         </script>
     </body>
 </html>
-}

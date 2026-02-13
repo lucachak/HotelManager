@@ -1,14 +1,16 @@
-from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
-from django.utils import timezone
 from django.db import transaction
 from django.db.models import Q
-from django.contrib import messages
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
+from django.views.decorators.http import require_POST
+
+from apps.accommodations.models import Room
 from apps.bookings.forms import QuickBookingForm
 from apps.bookings.models import Booking, RoomAllocation
-from apps.accommodations.models import Room
+
 
 @login_required
 def create_booking_htmx(request):
@@ -229,3 +231,34 @@ def booking_fnrh_pdf(request, booking_id):
     """
     booking = get_object_or_404(Booking, pk=booking_id)
     return render(request, 'bookings/print/fnrh.html', {'booking': booking})
+
+@login_required
+def booking_calendar(request):
+    """
+    Vista de agenda para visualização de ocupação por quarto e dia.
+    """
+    today = timezone.now().date()
+    # Definimos um range de 15 dias para a visualização inicial
+    end_date = today + timezone.timedelta(days=15)
+    dates = [today + timezone.timedelta(days=i) for i in range(15)]
+    
+    rooms = Room.objects.all().order_by('number')
+    allocations = RoomAllocation.objects.filter(
+        end_date__gte=today,
+        start_date__lte=end_date
+    ).select_related('booking__guest', 'room')
+
+    # Organiza alocações num dicionário para busca rápida no template: {(room_id, date): allocation}
+    booking_map = {}
+    for alloc in allocations:
+        current_date = alloc.start_date
+        while current_date <= alloc.end_date:
+            booking_map[(alloc.room.id, current_date)] = alloc
+            current_date += timezone.timedelta(days=1)
+
+    return render(request, 'booking/calendar.html', {
+        'rooms': rooms,
+        'dates': dates,
+        'booking_map': booking_map,
+        'today': today
+    })

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Agenda de Ocupação | Hotel Lux{% endblock %}
+
+{% block content %}
+<div class="max-w-full mx-auto space-y-6">
+    <div class="flex justify-between items-center">
+        <h2 class="text-3xl font-bold text-gray-800">Agenda de Ocupação</h2>
+        <div class="flex gap-2">
+             <span class="badge badge-success text-white">Ocupado</span>
+             <span class="badge badge-ghost">Disponível</span>
+        </div>
+    </div>
+
+    <div class="overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-100">
+        <table class="table table-pin-cols table-pin-rows w-full">
+            <thead>
+                <tr class="bg-gray-50">
+                    <th class="z-20">Quarto</th>
+                    {% for date in dates %}
+                    <th class="text-center {% if date == today %}bg-primary/10 text-primary{% endif %}">
+                        {{ date|date:"D" }}<br>{{ date|date:"d/m" }}
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for room in rooms %}
+                <tr>
+                    <td class="font-bold bg-gray-50">{{ room.number }}</td>
+                    {% for date in dates %}
+                        {% with key=room.id|stringformat:"s"|add:","|add:date|stringformat:"s" %}
+                        {% comment %} 
+                           Nota: O mapeamento complexo é mais fácil de gerir com um filtro customizado, 
+                           mas aqui está uma lógica simplificada.
+                        {% endcomment %}
+                        <td class="p-1 border border-gray-50 min-w-[100px] h-16">
+                            {% if room.status == 'OCCUPIED' and date == today or room.id in booking_map %}
+                                <div class="bg-primary/20 text-primary text-[10px] p-1 rounded h-full flex items-center justify-center text-center leading-tight">
+                                    Reserva Ativa
+                                </div>
+                            {% else %}
+                                <div class="w-full h-full hover:bg-gray-100 rounded cursor-pointer" 
+                                     hx-get="{% url 'create_booking_htmx' %}?room={{ room.id }}&date={{ date|date:'Y-m-d' }}"
+                                     hx-target="#booking-modal-container">
+                                </div>
+                            {% endif %}
+                        </td>
+                        {% endwith %}
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
