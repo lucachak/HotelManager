@@ -126,9 +126,9 @@ MEDIA_ROOT = BASE_DIR / "media"
 # Configuração Padrão de Chave Primária
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-LOGOUT_REDIRECT_URL = "/admin/login/"
+LOGOUT_REDIRECT_URL = "/"
 LOGIN_URL = "/admin/login/"
-
+LOGIN_REDIRECT_URL = '/'
 
 UNFOLD = {
     "SITE_TITLE": "Hotel Lux",
