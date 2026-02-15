@@ -1,0 +1,57 @@
+<div class="space-y-3 animate-fade-in">
+    {% for booking in ending_soon %}
+        {# Com o prefetch_related na view, o .first aqui não gera nova query #}
+        {% with allocation=booking.allocations.first %}
+        
+        {# Define a cor baseada na data #}
+        {% if allocation.end_date == today %}
+            <div class="alert shadow-sm border bg-rose-50 border-rose-200 text-rose-900 flex justify-between items-center p-3 rounded-lg">
+        {% else %}
+            <div class="alert shadow-sm border bg-amber-50 border-amber-200 text-amber-900 flex justify-between items-center p-3 rounded-lg">
+        {% endif %}
+            
+            <div class="flex items-center gap-3">
+                <div class="p-2 rounded-full bg-white/60">
+                    {% if allocation.end_date == today %}
+                        <i data-lucide="clock" class="w-5 h-5 text-rose-600"></i>
+                    {% else %}
+                        <i data-lucide="calendar-clock" class="w-5 h-5 text-amber-600"></i>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-sm">{{ booking.guest.name }}</h4>
+                    <p class="text-xs opacity-90">
+                        Quarto <span class="font-mono font-bold">{{ allocation.room.number }}</span> &bull; 
+                        
+                        {% if allocation.end_date == today %}
+                            <span class="font-bold uppercase tracking-wide text-[10px]">Sai Hoje</span>
+                        {% else %}
+                            <span class="font-medium">Sai Amanhã</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <button 
+                hx-get="{% url 'room_details_modal' allocation.room.id %}" 
+                hx-target="#booking-modal-container"
+                hx-swap="innerHTML"
+                class="btn btn-sm btn-circle btn-ghost bg-white/50 border-0 hover:bg-white tooltip tooltip-left"
+                data-tip="Ver Detalhes">
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+        </div>
+        {% endwith %}
+    {% empty %}
+        <div class="p-6 text-center border border-dashed border-base-300 rounded-xl text-base-content/40 bg-base-100/50">
+            <i data-lucide="check-circle-2" class="w-8 h-8 mx-auto mb-2 opacity-20"></i>
+            <span class="text-sm font-medium">Nenhuma saída próxima.</span>
+        </div>
+    {% endfor %}
+</div>
+
+<script>
+    // Garante que os ícones carreguem no HTMX swap
+    lucide.createIcons();
+</script>

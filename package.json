@@ -1,0 +1,33 @@
+{
+  "name": "hotelmanagement",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tailwindcss -i ./static/css/input.css -o ./static/css/output.css --watch",
+    "build": "tailwindcss -i ./static/css/input.css -o ./static/css/output.css --minify"
+  },
+  "dependencies": {
+    "daisyui": "^4.0.0",
+    "tailwindcss": "^3.0.0"
+  },
+  "repository": {
+
+    "type": "git",
+    "url": "git+https://github.com/lucachak/HotelManager.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/lucachak/HotelManager/issues"
+  },
+  "homepage": "https://github.com/lucachak/HotelManager#readme",
+  "devDependencies": {
+    "autoprefixer": "^10.4.24",
+    "daisyui": "^4.12.23",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17"
+  }
+}

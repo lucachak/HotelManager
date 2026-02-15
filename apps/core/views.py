@@ -1,11 +1,13 @@
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from django.utils import timezone
-from apps.accommodations.models import Room
-from apps.bookings.models import RoomAllocation
-from django.contrib.auth import logout
-from django.shortcuts import redirect
+from datetime import timedelta
+
 from django.contrib import messages
+from django.contrib.auth import logout
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect, render
+from django.utils import timezone
+
+from apps.accommodations.models import Room
+from apps.bookings.models import Booking, RoomAllocation
 
 
 def logout_and_redirect_login(request):
@@ -15,6 +17,29 @@ def logout_and_redirect_login(request):
         return redirect('admin:login')
     # Se não for POST, redireciona pro dashboard
     return redirect('dashboard')
+
+
+@login_required
+def dashboard_alerts_partial(request):
+    """
+    Retorna alertas de reservas terminando nas próximas 24h/48h.
+    """
+    today = timezone.now().date()
+    tomorrow = today + timedelta(days=1)
+
+    # OTIMIZAÇÃO: 
+    # 1. select_related('guest') -> Traz o hóspede (evita query no template)
+    # 2. prefetch_related('allocations') -> Traz os quartos (evita query N+1 no loop)
+    ending_soon = Booking.objects.filter(
+        status='CHECKED_IN',
+        allocations__end_date__range=(today, tomorrow) # Correção: check_out -> end_date
+    ).select_related('guest').prefetch_related('allocations').distinct()
+
+    return render(request, 'core/partials/alerts_widget.html', {
+        'ending_soon': ending_soon,
+        'today': today
+    })
+
 
 @login_required
 def dashboard(request):
