@@ -5,9 +5,12 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.utils import timezone
+from rest_framework import viewsets
 
 from apps.accommodations.models import Room
 from apps.bookings.models import Booking, RoomAllocation
+from apps.financials.models import Product
+from apps.financials.serializers import ProductSerializer
 
 
 def logout_and_redirect_login(request):
@@ -76,3 +79,12 @@ def dashboard(request):
     }
 
     return render(request, 'core/dashboard.html', context)
+
+
+class ApiTestView(viewsets.ModelViewSet):
+
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+
+
+
